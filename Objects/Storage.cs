@@ -13,6 +13,7 @@ namespace DiscordBot.Objects
     {
         private static Random rand = new Random();
         private static SQLiteConnection connection;
+        private static List<ulong> validChannelCache = new List<ulong>();
 
         static Storage()
         {
@@ -20,20 +21,22 @@ namespace DiscordBot.Objects
             if (!File.Exists(databaseLocation))
                 SQLiteConnection.CreateFile(databaseLocation);
 
+            Console.Write($"Writing data to {databaseLocation}");
+
             connection = new SQLiteConnection($"Data Source={databaseLocation};Version=3;");
             connection.Open();
 
             string sql = @"
                 CREATE TABLE IF NOT EXISTS Config (
-                    Value STRING,
-                    Key STRING
+                    Key TEXT,
+                    Value TEXT
                 )";
             using (var command = new SQLiteCommand(sql, connection)) command.ExecuteNonQuery();
 
             sql = @"
                 CREATE TABLE IF NOT EXISTS Users (
                     DiscordId INTEGER PRIMARY KEY,
-                    Character STRING
+                    Character TEXT
                 )";
             using (var command = new SQLiteCommand(sql, connection)) command.ExecuteNonQuery();
 
@@ -55,7 +58,7 @@ namespace DiscordBot.Objects
 
             sql = @"
                 CREATE TABLE IF NOT EXISTS Items (
-                    ItemId INTEGER PRIMARY KEY AUTOINCREMENTS,
+                    ItemId INTEGER PRIMARY KEY AUTOINCREMENT,
                     Name TEXT,
                     Rarity INTEGER,
                     ImageFile TEXT,
@@ -64,17 +67,49 @@ namespace DiscordBot.Objects
                 )";
             using (var command = new SQLiteCommand(sql, connection)) command.ExecuteNonQuery();
 
+            // update our list from config
+            if (GetConfig("validchannels", "") != "")
+                validChannelCache = Array.ConvertAll(GetConfig("validchannels", "").Split("-"), ulong.Parse).ToList();
         }
 
-        private static string GenerateInsertStatement(object obj, SQLiteCommand cmd, string table)
+        private static void PushValidChannels()
         {
-            var properties = obj.GetType().GetProperties().Where(p => p.GetCustomAttributes(true).Count(e => e.GetType() == typeof(SQLIgnore)) == 0);
-            var fieldNames = properties.Select(p => p.Name).ToArray();
-            var paramNames = properties.Select(p => "@" + p.Name).ToArray();
+            string result = string.Join("-", validChannelCache);
+            SetConfig("validchannels", result);
+        }
+
+        public static List<ulong> GetValidChannels()
+        {
+            return validChannelCache;
+        }
+
+        public static bool ContainsChannel(ulong channel)
+        {
+            return validChannelCache.Contains(channel);
+        }
+
+        public static void AddValidChannel(ulong channel)
+        {
+            validChannelCache.Add(channel);
+            PushValidChannels();
+        }
+
+        public static void RemoveValidChannel(ulong channel)
+        {
+            validChannelCache.Remove(channel);
+            PushValidChannels();
+        }
+
+        private static string GenerateStructInsertStatement<T>(T obj, SQLiteCommand cmd, string table) where T : struct
+        {
+            var fields = obj.GetType().GetFields().Where(f => f.GetCustomAttributes(true).Count(e => e.GetType() == typeof(SQLIgnore)) == 0);
+            var fieldNames = fields.Select(f => f.Name).ToArray();
+            var paramNames = fields.Select(f => "@" + f.Name).ToArray();
+
             string sql = $"INSERT INTO {table} ({string.Join(", ", fieldNames)}) VALUES ({string.Join(", ", paramNames)})";
 
-            foreach (var p in properties)
-                cmd.Parameters.AddWithValue("@" + p.Name, p.GetValue(obj));
+            foreach (var f in fields)
+                cmd.Parameters.AddWithValue("@" + f.Name, f.GetValue(obj));
 
             return sql;
         }
@@ -103,7 +138,7 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                command.CommandText = GenerateInsertStatement(item, command, "Items");
+                command.CommandText = GenerateStructInsertStatement(item, command, "Items");
                 command.ExecuteNonQuery();
             }
         }
@@ -112,7 +147,8 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                command.CommandText = $"DELETE FROM Items WHERE Name = '{name}';";
+                command.CommandText = $"DELETE FROM Items WHERE Name = '@Name';";
+                command.Parameters.AddWithValue("@Name", name);
                 command.ExecuteNonQuery();
             }
         }
@@ -121,7 +157,8 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                command.CommandText = GenerateInsertStatement(keeper, command, "ShopKeepers");
+                Console.WriteLine(GenerateStructInsertStatement(keeper, command, "ShopKeepers"));
+                command.CommandText = GenerateStructInsertStatement(keeper, command, "ShopKeepers");
                 command.ExecuteNonQuery();
             }
         }
@@ -137,9 +174,10 @@ namespace DiscordBot.Objects
 
         public static ShopKeeper? GetShopkeeper(string name)
         {
-            string query = $"SELECT * FROM Shopkeepers WHERE Name COLLATE NOCASE = {name};";
+            string query = $"SELECT * FROM ShopKeepers WHERE Name COLLATE NOCASE = @Name;";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
             {
+                command.Parameters.AddWithValue("@Name", name);
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     if (reader.Read())
@@ -149,6 +187,23 @@ namespace DiscordBot.Objects
                 }
             }
             return null;
+        }
+
+        public static List<ShopKeeper> GetShopkeepers()
+        {
+            string query = "SELECT * FROM ShopKeepers;";
+            List<ShopKeeper> items = new List<ShopKeeper>();
+            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            {
+                using (SQLiteDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        items.Add(PopulateStructFromReader<ShopKeeper>(reader));
+                    }
+                }
+            }
+            return items;
         }
 
         public static Item GetRandomItemRarity(Rarity highest)
@@ -183,9 +238,10 @@ namespace DiscordBot.Objects
 
         public static Item? GetItem(string name)
         {
-            string query = $"SELECT * FROM Items WHERE Name COLLATE NOCASE = {name};";
+            string query = $"SELECT * FROM Items WHERE Name COLLATE NOCASE = @Name;";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
             {
+                command.Parameters.AddWithValue("@Name", name);
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     if (reader.Read())
@@ -211,6 +267,23 @@ namespace DiscordBot.Objects
                 }
             }
             return null;
+        }
+
+        public static List<Item> GetItems()
+        {
+            string query = "SELECT * FROM Items;";
+            List<Item> items = new List<Item>();
+            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            {
+                using (SQLiteDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        items.Add(PopulateStructFromReader<Item>(reader));
+                    }
+                }
+            }
+            return items;
         }
 
         public static ShopKeeper? GetRandomShopkeeper()
@@ -301,15 +374,14 @@ namespace DiscordBot.Objects
 
         public static string GetConfig(string key, string defaul)
         {
-            string query = $"SELECT Value FROM Config WHERE Key = {key};";
+            string query = "SELECT Value FROM Config WHERE Key = @Key;";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
             {
+                command.Parameters.AddWithValue("@Key", key);
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     if (reader.Read())
-                    {
-                        return reader.GetString(1);
-                    }
+                        return reader.GetString(0);
                 }
             }
             return defaul;

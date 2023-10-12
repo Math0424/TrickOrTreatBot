@@ -4,7 +4,6 @@ using Discord.Interactions;
 using Discord.WebSocket;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 using DiscordBot.Objects;
 using DiscordBot.Services;
@@ -86,7 +85,7 @@ namespace DiscordBot
                     await LogAsync(new LogMessage(LogSeverity.Info, "Bot", "Re-Logged in"));
                 }
             };
-            
+
             await Client.LoginAsync(TokenType.Bot, Storage.GetConfig("token", "nope"));
             await Client.StartAsync();
 

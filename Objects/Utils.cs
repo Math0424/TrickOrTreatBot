@@ -1,4 +1,5 @@
 ﻿using Discord;
+using ImageMagick;
 using System;
 using System.IO;
 using System.Net;
@@ -200,39 +201,54 @@ namespace DiscordBot.Objects
             string imageName = null;
             using (WebClient client = new WebClient())
             {
-                var data = await client.DownloadDataTaskAsync(new Uri(url));
+                Uri uri = new Uri(url);
+                var data = await client.DownloadDataTaskAsync(uri);
 
                 using (MD5 md5Hash = MD5.Create())
                 {
                     byte[] hashBytes = md5Hash.ComputeHash(data);
                     imageName = BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
                 }
-                imageName += Path.GetExtension(url);
+                imageName += Path.GetExtension(uri.LocalPath);
 
-                using var file = File.Create(imageName);
+                Console.WriteLine($"Saving image '{Path.Combine(GetDataFolder(), imageName)}'");
+                using var file = File.Create(Path.Combine(GetDataFolder(), imageName));
                 file.Write(data);
             }
             return imageName;
         }
 
-        public static Stream GetFileFromCache(string fileName, string url)
+        public static Stream GetFileFromCache(string fileName)
         {
-            string cacheFolder = Path.Combine(Path.GetTempPath(), "PinBot");
-            if (!Directory.Exists(cacheFolder))
-                Directory.CreateDirectory(cacheFolder);
-            string filePath = Path.Combine(cacheFolder, fileName);
+            string filePath = Path.Combine(GetDataFolder(), fileName);
 
             if (File.Exists(filePath))
-            {
                 return File.OpenRead(filePath);
-            }
-            using (WebClient client = new WebClient())
+            return null;
+        }
+
+        public static Stream GetShopkeeperPreview(ShopKeeper keeper)
+        {
+            MemoryStream stream = new MemoryStream();
+            using (MagickImage image = new MagickImage(GetFileFromCache(keeper.ImageFile)))
             {
-                var data = client.DownloadData(url);
-                using var file = File.Create(filePath);
-                file.Write(data);
+                new Drawables()
+                    .FontPointSize(36)
+                    .Font("Arial")
+                    .FillColor(new MagickColor("white"))
+                    .Text(50, 50, keeper.Name)
+                    .Draw(image);
+
+                new Drawables()
+                    .FontPointSize(18)
+                    .Font("Arial")
+                    .FillColor(new MagickColor("white"))
+                    .Text(50, 100, keeper.FlavorText)
+                    .Draw(image);
+
+                image.Write(stream, MagickFormat.Png);
             }
-            return File.OpenRead(filePath);
+            return stream;
         }
 
     }

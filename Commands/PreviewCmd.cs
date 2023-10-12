@@ -12,27 +12,27 @@ namespace TrickOrTreatBot.Commands
         [SlashCommand("preview", "preview a item or shopkeeper")]
         public async Task Preview([Choice("Shopkeeper", "sk"), Choice("Item", "it")] string type, string name)
         {
-            switch (type)
-            {
-                case "sk":
-                    ShopKeeper? keeper = Storage.GetShopkeeper(name);
-                    if (keeper.HasValue)
-                    {
-                        await RespondAsync(embed: Utils.GenerateShopkeeperPreview(keeper.Value).Build());
-                        return;
-                    }
-                    await RespondAsync($"Unknown shopkeeper {name}", ephemeral:true);
-                    break;
-                case "it":
-                    Item? item = Storage.GetItem(name);
-                    if (item.HasValue)
-                    {
-                        await RespondAsync(embed: Utils.GenerateItemPreview(item.Value).Build());
-                        return;
-                    }
-                    await RespondAsync($"Unknown item {name}", ephemeral: true);
-                    break;
-            }
+            //switch (type)
+            //{
+            //    case "sk":
+            //        ShopKeeper? keeper = Storage.GetShopkeeper(name);
+            //        if (keeper.HasValue)
+            //        {
+            //            await RespondAsync(embed: Utils.GenerateShopkeeperPreview(keeper.Value).Build());
+            //            return;
+            //        }
+            //        await RespondAsync($"Unknown shopkeeper {name}", ephemeral:true);
+            //        break;
+            //    case "it":
+            //        Item? item = Storage.GetItem(name);
+            //        if (item.HasValue)
+            //        {
+            //            await RespondAsync(embed: Utils.GenerateItemPreview(item.Value).Build());
+            //            return;
+            //        }
+            //        await RespondAsync($"Unknown item {name}", ephemeral: true);
+            //        break;
+            //}
         }
 
         [SlashCommand("list", "list items or shopkeepers")]

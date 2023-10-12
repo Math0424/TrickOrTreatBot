@@ -16,7 +16,6 @@ namespace DiscordBot.Services
         private Dictionary<ulong, Drop> _drops = new Dictionary<ulong, Drop>();
 
         private readonly DiscordSocketClient _client;
-        private readonly DiscordCore _core;
 
         public string GetName(ulong id)
         {
@@ -24,9 +23,8 @@ namespace DiscordBot.Services
             return user?.GlobalName ?? user?.Username ?? id.ToString();
         }
 
-        public TrickOrTreatModule(DiscordSocketClient Client, DiscordCore core)
+        public TrickOrTreatModule(DiscordSocketClient Client)
         {
-            _core = core;
             _client = Client;
             new Task(() => Loop()).Start();
         }
@@ -54,7 +52,7 @@ namespace DiscordBot.Services
 
                     if (bool.Parse(Storage.GetConfig("drops", "false")))
                     {
-                        foreach (var x in Storage.Config.ValidChannels)
+                        foreach (var x in Storage.GetValidChannels())
                         {
                             if (!_drops.ContainsKey(x))
                             {
@@ -138,18 +136,18 @@ namespace DiscordBot.Services
 
         private async Task GetDrop(Drop drop, User user)
         {
-            Item item = Storage.GetRandomItem(user);
+            //Item item = Storage.GetRandomItem(user);
             //user.Inventory.Add(item.ItemID);
 
-            await _core.LogAsync(new LogMessage(LogSeverity.Info, "Bot", $"{GetName(user.DiscordId)} has claimed prize '{item.Name}'"));
+            //await _core.LogAsync(new LogMessage(LogSeverity.Info, "Bot", $"{GetName(user.DiscordId)} has claimed prize '{item.Name}'"));
 
             EmbedBuilder builder = new EmbedBuilder();
             builder.Title = "Happy Halloween!";
             //builder.ImageUrl = drop.Shopkeeper.ImgURL;
-            builder.Description = $"{drop.Shopkeeper.Name} liked <@{user.DiscordId}> {user.Character} costume so much they gave them one **{item.Name}**";
+            //builder.Description = $"{drop.Shopkeeper.Name} liked <@{user.DiscordId}> {user.Character} costume so much they gave them one **{item.Name}**";
             //builder.ThumbnailUrl = item.ImgURL;
             builder.Footer = new EmbedFooterBuilder();
-            builder.Footer.Text = $"This item is of rarity {item.Rarity}, it has been added to your score";
+            //builder.Footer.Text = $"This item is of rarity {item.Rarity}, it has been added to your score";
 
             drop.TimeRemaining = 4;
 

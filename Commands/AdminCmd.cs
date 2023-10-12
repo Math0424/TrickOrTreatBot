@@ -49,17 +49,17 @@ namespace DiscordBot.Commands
                     await ((ITextChannel)Context.Channel).SendMessageAsync(msg);
                     return;
                 case "channeldrops":
-                    if (Storage.Config.ValidChannels.Contains(Context.Channel.Id))
+                    if (Storage.ContainsChannel(Context.Channel.Id))
                     {
-                        Storage.Config.ValidChannels.Remove(Context.Channel.Id);
-                        enabled = false;
+                        Storage.RemoveValidChannel(Context.Channel.Id);
+                        await RespondAsync($"Removed channel from drop pool", ephemeral: true);
                     }
                     else
                     {
-                        Storage.Config.ValidChannels.Add(Context.Channel.Id);
-                        enabled = true;
+                        Storage.AddValidChannel(Context.Channel.Id);
+                        await RespondAsync($"Added channel to drop pool", ephemeral: true);
                     }
-                    break;
+                    return;
                 case "rate":
                     if (args.Length == 2)
                     {

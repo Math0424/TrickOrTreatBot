@@ -11,7 +11,7 @@ namespace TrickOrTreatBot.Commands
     public class CreateCmd : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("createitem", "Add a new item to get")]
-        public async Task CreateItem(string name, string flavorText, Rarity rarity, string ImageURL, Attachment attachment)
+        public async Task CreateItem(string name, string flavorText, Rarity rarity, string ImageURL = null, Attachment attachment = null)
         {
             if (ImageURL != null && attachment != null)
             {
@@ -57,11 +57,11 @@ namespace TrickOrTreatBot.Commands
         }
 
         [SlashCommand("createshopkeeper", "Add a new shopkeeper")]
-        public async Task CreateShopkeeper(string name, string flavorText, string ImageURL, Attachment attachment)
+        public async Task CreateShopkeeper(string name, string flavorText, string ImageURL = null, Attachment attachment = null)
         {
-            if (ImageURL != null && attachment != null)
+            if ((ImageURL != null && attachment != null) || (attachment == null && ImageURL == null))
             {
-                await RespondAsync($"Please choose either an image upload or url upload.", ephemeral: true);
+                await RespondAsync($"Shopkeeper must have an image, one or more", ephemeral: true);
                 return;
             }
 
@@ -96,8 +96,9 @@ namespace TrickOrTreatBot.Commands
                 Name = name
             };
 
-            Storage.AddShopkeeper(shopkeeper);
             Utils.Log($"{Context.User.Username} added shopkeeper {name}");
+            Storage.AddShopkeeper(shopkeeper);
+            await RespondAsync($"Completed", ephemeral: true);
             //await RespondAsync(embed: Utils.GenerateShopkeeperPreview(shopkeeper).Build(), ephemeral: true);
         }
 
