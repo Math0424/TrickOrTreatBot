@@ -13,19 +13,19 @@ namespace TrickOrTreatBot.Objects
         public int Chance;
     }
 
-    public struct User
+    public class User
     {
         public ulong DiscordId;
         public string Character;
     }
 
-    public struct InventoryItem
+    public class InventoryItem
     {
-        ulong OwnerId;
-        int ItemId;
+        public ulong OwnerId;
+        public int ItemId;
     }
 
-    public struct ShopKeeper
+    public class ShopKeeper
     {
         public string ImageFile;
         public string Name;
@@ -33,11 +33,12 @@ namespace TrickOrTreatBot.Objects
         public ulong CreatorId;
     }
 
-    public struct Item
+    public class Item
     {
+        [SQLIgnore]
         public int ItemId;
         public string Name;
-        public Rarity Rarity;
+        public int Rarity;
         public string ImageFile;
         public string FlavorText;
         public ulong CreatorId;

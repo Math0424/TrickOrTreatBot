@@ -13,9 +13,9 @@ namespace TrickOrTreatBot.Commands
         [SlashCommand("createitem", "Add a new item to get")]
         public async Task CreateItem(string name, string flavorText, Rarity rarity, string ImageURL = null, Attachment attachment = null)
         {
-            if (ImageURL != null && attachment != null)
+            if ((ImageURL != null && attachment != null) || (attachment == null && ImageURL == null))
             {
-                await RespondAsync($"Please choose either an image upload or url upload.", ephemeral: true);
+                await RespondAsync($"Command must have an image, only one", ephemeral: true);
                 return;
             }
 
@@ -36,7 +36,7 @@ namespace TrickOrTreatBot.Commands
                 fileName = await Utils.DownloadFile(attachment.Url);
             }
 
-            if (Storage.GetItem(name).HasValue)
+            if (Storage.GetItem(name) != null)
             {
                 await RespondAsync($"Item with {name} already added", ephemeral: true);
                 return;
@@ -47,13 +47,13 @@ namespace TrickOrTreatBot.Commands
                 Name = name,
                 CreatorId = Context.User.Id,
                 FlavorText = flavorText,
-                Rarity = rarity,
+                Rarity = (int)rarity,
                 ImageFile = fileName,
             };
+
             Storage.AddItem(item);
             Utils.Log($"{Context.User.Username} added item {name}");
-            //await RespondAsync(embed: Utils.GenerateItemPreview(item).Build(), ephemeral: true);
-            //TODO show image of item
+            await RespondAsync($"Completed", ephemeral: true);
         }
 
         [SlashCommand("createshopkeeper", "Add a new shopkeeper")]
@@ -61,7 +61,7 @@ namespace TrickOrTreatBot.Commands
         {
             if ((ImageURL != null && attachment != null) || (attachment == null && ImageURL == null))
             {
-                await RespondAsync($"Shopkeeper must have an image, one or more", ephemeral: true);
+                await RespondAsync($"Command must have an image, only one", ephemeral: true);
                 return;
             }
 
@@ -82,7 +82,7 @@ namespace TrickOrTreatBot.Commands
                 fileName = await Utils.DownloadFile(attachment.Url);
             }
 
-            if (Storage.GetShopkeeper(name).HasValue)
+            if (Storage.GetShopkeeper(name) != null)
             {
                 await RespondAsync($"Shopkeeper with {name} already added", ephemeral: true);
                 return;
@@ -99,7 +99,6 @@ namespace TrickOrTreatBot.Commands
             Utils.Log($"{Context.User.Username} added shopkeeper {name}");
             Storage.AddShopkeeper(shopkeeper);
             await RespondAsync($"Completed", ephemeral: true);
-            //await RespondAsync(embed: Utils.GenerateShopkeeperPreview(shopkeeper).Build(), ephemeral: true);
         }
 
         private async Task<bool> ValidateImageURL(string imageUrl)

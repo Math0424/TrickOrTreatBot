@@ -29,14 +29,14 @@ namespace DiscordBot.Commands
 
         private async Task ClaimPrize(bool trick)
         {
-            User? u = Storage.GetUser(Context.User.Id);
-            if (!u.HasValue)
+            User u = Storage.GetUser(Context.User.Id);
+            if (u == null)
             {
                 await RespondAsync("You dont have a costume, use /costume", ephemeral: true);
                 return;
             }
 
-            ClaimStatus s = _mod.ClaimDrop(Context.Channel.Id, u.Value, trick);
+            ClaimStatus s = _mod.ClaimDrop(Context.Channel.Id, u, trick);
             switch (s)
             {
                 case ClaimStatus.Claimed:

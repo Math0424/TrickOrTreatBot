@@ -67,8 +67,8 @@ namespace DiscordBot.Services
                 }
                 catch (Exception ex)
                 {
-                    //Utils.Log($"Failed to spawn drop");
-                    //Utils.Log(ex.Message);
+                    Utils.Log($"Failed to spawn drop");
+                    Utils.Log(ex.Message);
                 }
 
             }
@@ -107,51 +107,59 @@ namespace DiscordBot.Services
         {
             Drop d = new Drop()
             {
-                Shopkeeper = Storage.GetRandomShopkeeper().Value,
-                Trick = (rand.Next(0, 2) == 0 ? true : false),
+                Shopkeeper = Storage.GetRandomShopkeeper(),
+                Trick = rand.NextDouble() > .5,
             };
 
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.Title = "Happy Halloween!";
-            //builder.ImageUrl = d.Shopkeeper.ImgURL;
-            builder.Description = $"{d.Shopkeeper.Name} has appeared, type **/{(d.Trick ? "trick" : "treat")}** to claim a reward!";
-            builder.Footer = new EmbedFooterBuilder();
-            builder.Footer.Text = $"\"{d.Shopkeeper.FlavorText}\"";
+            var msg = await ((SocketTextChannel)_client.GetChannel(channelID)).SendFileAsync(
+                Utils.GetShopkeeperPreview(
+                    d.Shopkeeper.ImageFile,
+                    $"Happy halloween!\n{d.Shopkeeper.Name} has appeared",
+                    $"'{d.Shopkeeper.FlavorText}'",
+                    $"type /{(d.Trick ? "trick" : "treat")} to claim!"
+                    ), "shopkeeper.png");
 
-            var msg = await ((SocketTextChannel)_client.GetChannel(channelID)).SendMessageAsync(embed: builder.Build());
             d.Message = msg;
-
             _drops.Add(channelID, d);
         }
 
-        private async Task FailDrop(Drop drop, User user)
+        private async Task FailDrop(Drop d, User user)
         {
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.Title = "Oh no!";
-            builder.Description = $"<@{user.DiscordId}> used the wrong command and scared them off.";
-            await drop.Message.ModifyAsync(x => { x.Embed = builder.Build(); });
+            d.Message.DeleteAsync();
 
-            drop.TimeRemaining = 4;
+            var msg = await ((SocketTextChannel)d.Message.Channel).SendFileAsync(
+                Utils.GetShopkeeperPreview(
+                    d.Shopkeeper.ImageFile,
+                    $"{GetName(user.DiscordId)} has scared {d.Shopkeeper.Name} away!",
+                    $"Next time dont be so hasty",
+                    null
+                    ), "shopkeeper.png");
+
+            d.Message = msg;
+            d.TimeRemaining = 4;
         }
 
-        private async Task GetDrop(Drop drop, User user)
+        private async Task GetDrop(Drop d, User user)
         {
-            //Item item = Storage.GetRandomItem(user);
-            //user.Inventory.Add(item.ItemID);
+            d.Message.DeleteAsync();
 
-            //await _core.LogAsync(new LogMessage(LogSeverity.Info, "Bot", $"{GetName(user.DiscordId)} has claimed prize '{item.Name}'"));
+            Item item = Storage.GetRandomItemRarity(Rarity.Mythic);
+            Storage.AddInventoryItem(user.DiscordId, item.ItemId);
 
-            EmbedBuilder builder = new EmbedBuilder();
-            builder.Title = "Happy Halloween!";
-            //builder.ImageUrl = drop.Shopkeeper.ImgURL;
-            //builder.Description = $"{drop.Shopkeeper.Name} liked <@{user.DiscordId}> {user.Character} costume so much they gave them one **{item.Name}**";
-            //builder.ThumbnailUrl = item.ImgURL;
-            builder.Footer = new EmbedFooterBuilder();
-            //builder.Footer.Text = $"This item is of rarity {item.Rarity}, it has been added to your score";
+            Utils.Log($"{GetName(user.DiscordId)} has claimed prize '{item.Name}'");
+            User u = Storage.GetUser(user.DiscordId);
 
-            drop.TimeRemaining = 4;
+            var msg = await ((SocketTextChannel)d.Message.Channel).SendFileAsync(
+                Utils.GetShopkeeperPreview(
+                    d.Shopkeeper.ImageFile,
+                    $"{d.Shopkeeper.Name}",
+                    $"{d.Shopkeeper.FlavorText}",
+                    $"{d.Shopkeeper.Name} loved your {u.Character} costume so much they gave you {item.Name}",
+                    item
+                    ), "prize.png");
 
-            await drop.Message.ModifyAsync(x => { x.Embed = builder.Build(); });
+            d.Message = msg;
+            d.TimeRemaining = 4;
         }
 
     }

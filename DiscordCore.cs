@@ -9,6 +9,8 @@ using DiscordBot.Objects;
 using DiscordBot.Services;
 using TrickOrTreatBot.Services;
 using System.Linq;
+using System.IO;
+using TrickOrTreatBot.Objects;
 
 namespace DiscordBot
 {

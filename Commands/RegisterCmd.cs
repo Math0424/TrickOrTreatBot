@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using DiscordBot.Objects;
 using TrickOrTreatBot.Objects;
+using System;
 
 namespace DiscordBot.Commands
 {
@@ -19,7 +20,14 @@ namespace DiscordBot.Commands
                         DiscordId = Context.User.Id,
                         Character = x
                     };
-                    Storage.AddUser(u);
+                    try
+                    {
+                        Storage.AddUser(u);
+                    }
+                    catch(Exception ex)
+                    {
+                        Utils.Log(ex);
+                    }
                     await RespondAsync($"Set your favorite champion to '{x}'", ephemeral: true);
                     return;
                 }

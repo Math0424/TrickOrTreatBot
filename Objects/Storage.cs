@@ -21,7 +21,7 @@ namespace DiscordBot.Objects
             if (!File.Exists(databaseLocation))
                 SQLiteConnection.CreateFile(databaseLocation);
 
-            Console.Write($"Writing data to {databaseLocation}");
+            Utils.Log($"Writing data to {databaseLocation}");
 
             connection = new SQLiteConnection($"Data Source={databaseLocation};Version=3;");
             connection.Open();
@@ -52,7 +52,7 @@ namespace DiscordBot.Objects
                     ImageFile TEXT,
                     Name TEXT,
                     FlavorText TEXT,
-                    CreatorId INTEGER REFERENCES Users(DiscordId)
+                    CreatorId INTEGER
                 )";
             using (var command = new SQLiteCommand(sql, connection)) command.ExecuteNonQuery();
 
@@ -63,7 +63,7 @@ namespace DiscordBot.Objects
                     Rarity INTEGER,
                     ImageFile TEXT,
                     FlavorText TEXT,
-                    CreatorId INTEGER REFERENCES Users(DiscordId)
+                    CreatorId INTEGER
                 )";
             using (var command = new SQLiteCommand(sql, connection)) command.ExecuteNonQuery();
 
@@ -100,7 +100,7 @@ namespace DiscordBot.Objects
             PushValidChannels();
         }
 
-        private static string GenerateStructInsertStatement<T>(T obj, SQLiteCommand cmd, string table) where T : struct
+        private static string GenerateStructInsertStatement<T>(T obj, SQLiteCommand cmd, string table)
         {
             var fields = obj.GetType().GetFields().Where(f => f.GetCustomAttributes(true).Count(e => e.GetType() == typeof(SQLIgnore)) == 0);
             var fieldNames = fields.Select(f => f.Name).ToArray();
@@ -114,7 +114,7 @@ namespace DiscordBot.Objects
             return sql;
         }
 
-        private static T PopulateStructFromReader<T>(SQLiteDataReader reader) where T : struct
+        private static T PopulateFromReader<T>(SQLiteDataReader reader) where T : new()
         {
             T result = new T();
             Type type = typeof(T);
@@ -122,15 +122,18 @@ namespace DiscordBot.Objects
             for (int i = 0; i < reader.FieldCount; i++)
             {
                 string fieldName = reader.GetName(i);
-                PropertyInfo property = type.GetProperty(fieldName);
+                FieldInfo field = type.GetField(fieldName);
 
-                if (property != null && !reader.IsDBNull(i))
+                if (field != null && !reader.IsDBNull(i))
                 {
                     object value = reader.GetValue(i);
-                    property.SetValue(result, Convert.ChangeType(value, property.PropertyType), null);
+                    field.SetValue(result, Convert.ChangeType(value, field.FieldType));
+                }
+                else
+                {
+                    Utils.Log($"Cannot get '{fieldName}' from struct type '{type}'");
                 }
             }
-
             return result;
         }
 
@@ -138,6 +141,7 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
+                Utils.Log(GenerateStructInsertStatement(item, command, "Items"));
                 command.CommandText = GenerateStructInsertStatement(item, command, "Items");
                 command.ExecuteNonQuery();
             }
@@ -147,7 +151,7 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                command.CommandText = $"DELETE FROM Items WHERE Name = '@Name';";
+                command.CommandText = $"DELETE FROM Items WHERE Name = @Name;";
                 command.Parameters.AddWithValue("@Name", name);
                 command.ExecuteNonQuery();
             }
@@ -157,7 +161,6 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                Console.WriteLine(GenerateStructInsertStatement(keeper, command, "ShopKeepers"));
                 command.CommandText = GenerateStructInsertStatement(keeper, command, "ShopKeepers");
                 command.ExecuteNonQuery();
             }
@@ -172,7 +175,7 @@ namespace DiscordBot.Objects
             }
         }
 
-        public static ShopKeeper? GetShopkeeper(string name)
+        public static ShopKeeper GetShopkeeper(string name)
         {
             string query = $"SELECT * FROM ShopKeepers WHERE Name COLLATE NOCASE = @Name;";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
@@ -182,7 +185,7 @@ namespace DiscordBot.Objects
                 {
                     if (reader.Read())
                     {
-                        return PopulateStructFromReader<ShopKeeper>(reader);
+                        return PopulateFromReader<ShopKeeper>(reader);
                     }
                 }
             }
@@ -199,7 +202,7 @@ namespace DiscordBot.Objects
                 {
                     while (reader.Read())
                     {
-                        items.Add(PopulateStructFromReader<ShopKeeper>(reader));
+                        items.Add(PopulateFromReader<ShopKeeper>(reader));
                     }
                 }
             }
@@ -224,10 +227,10 @@ namespace DiscordBot.Objects
                 {
                     while (reader.Read())
                     {
-                        Item randomItem = PopulateStructFromReader<Item>(reader);
+                        Item randomItem = PopulateFromReader<Item>(reader);
                         if ((int)randomItem.Rarity < (int)highest)
                         {
-                            for (int i = 0; i < raities[randomItem.Rarity]; i++)
+                            for (int i = 0; i < raities[(Rarity)randomItem.Rarity]; i++)
                                 items.Add(randomItem);
                         }
                     }
@@ -236,7 +239,7 @@ namespace DiscordBot.Objects
             return items[rand.Next(items.Count)];
         }
 
-        public static Item? GetItem(string name)
+        public static Item GetItem(string name)
         {
             string query = $"SELECT * FROM Items WHERE Name COLLATE NOCASE = @Name;";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
@@ -246,14 +249,14 @@ namespace DiscordBot.Objects
                 {
                     if (reader.Read())
                     {
-                        return PopulateStructFromReader<Item>(reader);
+                        return PopulateFromReader<Item>(reader);
                     }
                 }
             }
             return null;
         }
 
-        public static Item? GetItem(int id)
+        public static Item GetItem(int id)
         {
             string query = $"SELECT * FROM Items WHERE ItemId = {id};";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
@@ -262,7 +265,7 @@ namespace DiscordBot.Objects
                 {
                     if (reader.Read())
                     {
-                        return PopulateStructFromReader<Item>(reader);
+                        return PopulateFromReader<Item>(reader);
                     }
                 }
             }
@@ -279,23 +282,23 @@ namespace DiscordBot.Objects
                 {
                     while (reader.Read())
                     {
-                        items.Add(PopulateStructFromReader<Item>(reader));
+                        items.Add(PopulateFromReader<Item>(reader));
                     }
                 }
             }
             return items;
         }
 
-        public static ShopKeeper? GetRandomShopkeeper()
+        public static ShopKeeper GetRandomShopkeeper()
         {
-            string query = $"SELECT * FROM ShopKeeper ORDER BY RANDOM() LIMIT 1;";
+            string query = $"SELECT * FROM ShopKeepers ORDER BY RANDOM() LIMIT 1;";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
             {
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     if (reader.Read())
                     {
-                        return PopulateStructFromReader<ShopKeeper>(reader);
+                        return PopulateFromReader<ShopKeeper>(reader);
                     }
                 }
             }
@@ -348,7 +351,7 @@ namespace DiscordBot.Objects
             return 0;
         }
 
-        public static User? GetUser(ulong discordId)
+        public static User GetUser(ulong discordId)
         {
             string query = $"SELECT * FROM Users WHERE DiscordId = {discordId};";
             using (SQLiteCommand command = new SQLiteCommand(query, connection))
@@ -357,7 +360,7 @@ namespace DiscordBot.Objects
                 {
                     if (reader.Read())
                     {
-                        return PopulateStructFromReader<User>(reader);
+                        return PopulateFromReader<User>(reader);
                     }
                 }
             }
@@ -368,8 +371,13 @@ namespace DiscordBot.Objects
         {
             string query = $@"
                     INSERT OR REPLACE INTO Users (DiscordId, Character)
-                    VALUES ({user.DiscordId}, {user.Character});";
-            using (var command = new SQLiteCommand(query, connection)) command.ExecuteNonQuery();
+                    VALUES (@DiscordId, @Character);";
+            using (var command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@DiscordId", user.DiscordId);
+                command.Parameters.AddWithValue("@Character", user.Character);
+                command.ExecuteNonQuery();
+            }
         }
 
         public static string GetConfig(string key, string defaul)
@@ -395,7 +403,7 @@ namespace DiscordBot.Objects
             using (var command = new SQLiteCommand(query, connection)) command.ExecuteNonQuery();
         }
 
-        public static void AddInventoryItem(ulong userId, ulong itemId)
+        public static void AddInventoryItem(ulong userId, int itemId)
         {
             string query = $@"
                 INSERT INTO ItemInventory (OwnerId, ItemId)

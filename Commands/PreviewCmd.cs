@@ -12,27 +12,27 @@ namespace TrickOrTreatBot.Commands
         [SlashCommand("preview", "preview a item or shopkeeper")]
         public async Task Preview([Choice("Shopkeeper", "sk"), Choice("Item", "it")] string type, string name)
         {
-            //switch (type)
-            //{
-            //    case "sk":
-            //        ShopKeeper? keeper = Storage.GetShopkeeper(name);
-            //        if (keeper.HasValue)
-            //        {
-            //            await RespondAsync(embed: Utils.GenerateShopkeeperPreview(keeper.Value).Build());
-            //            return;
-            //        }
-            //        await RespondAsync($"Unknown shopkeeper {name}", ephemeral:true);
-            //        break;
-            //    case "it":
-            //        Item? item = Storage.GetItem(name);
-            //        if (item.HasValue)
-            //        {
-            //            await RespondAsync(embed: Utils.GenerateItemPreview(item.Value).Build());
-            //            return;
-            //        }
-            //        await RespondAsync($"Unknown item {name}", ephemeral: true);
-            //        break;
-            //}
+            switch (type)
+            {
+                case "sk":
+                    ShopKeeper keeper = Storage.GetShopkeeper(name);
+                    if (keeper != null)
+                    {
+                        await RespondWithFileAsync(Utils.GetShopkeeperPreview(keeper.ImageFile, keeper.Name, $"'{keeper.FlavorText}'", null), "card.png", ephemeral: true);
+                        return;
+                    }
+                    await RespondAsync($"Unknown shopkeeper {name}", ephemeral:true);
+                    break;
+                case "it":
+                    Item item = Storage.GetItem(name);
+                    if (item != null)
+                    {
+                        await RespondWithFileAsync(Utils.GetItemPreview(item.ImageFile, item.Name, item.FlavorText, (Rarity)item.Rarity), "item.png", ephemeral: true);
+                        return;
+                    }
+                    await RespondAsync($"Unknown item {name}", ephemeral: true);
+                    break;
+            }
         }
 
         [SlashCommand("list", "list items or shopkeepers")]
@@ -42,17 +42,19 @@ namespace TrickOrTreatBot.Commands
             switch (type)
             {
                 case "sk":
-                    builder.Title = $"Shopkeepers ({Storage.GetShopkeepers().Count})";
-                    foreach (var x in Storage.GetShopkeepers())
+                    var shopkeepers = Storage.GetShopkeepers();
+                    builder.Title = $"Shopkeepers ({shopkeepers.Count})";
+                    foreach (var x in shopkeepers)
                     {
-                        builder.Description += $"- **{x.Name}**\n";
+                        builder.Description += $"- **{x.Name}**  -  '{x.FlavorText}'\n";
                     }
                     break;
                 case "it":
-                    builder.Title = $"Items ({Storage.GetItems().Count})";
-                    foreach (var x in Storage.GetItems())
+                    var items = Storage.GetItems();
+                    builder.Title = $"Items ({items.Count})";
+                    foreach (var x in items)
                     {
-                        builder.Description += $"- **{x.Name}** : {x.Rarity}\n";
+                        builder.Description += $"- **{x.Name}** : {(Rarity)x.Rarity}\n";
                     }
                     break;
             }

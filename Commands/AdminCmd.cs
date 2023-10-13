@@ -30,7 +30,7 @@ namespace DiscordBot.Commands
             string[] args = value.Split(" ");
             switch (args[0])
             {
-                case "enabled":
+                case "toggle":
                     bool enabled = !bool.Parse(Storage.GetConfig("drops", "false"));
                     Storage.SetConfig("drops", enabled.ToString());
                     await RespondAsync($"Toggled {value} to {(enabled ? "true" : "false")}", ephemeral: true);
@@ -39,16 +39,7 @@ namespace DiscordBot.Commands
                     await _trick.SpawnDrop(Context.Channel.Id);
                     await RespondAsync("Spawned", ephemeral: true);
                     return;
-                case "echo":
-                    await RespondAsync("Echoed", ephemeral: true);
-                    string msg = "";
-                    for (int i = 1; i < args.Length; i++)
-                    {
-                        msg += args[i] + " ";
-                    }
-                    await ((ITextChannel)Context.Channel).SendMessageAsync(msg);
-                    return;
-                case "channeldrops":
+                case "drops":
                     if (Storage.ContainsChannel(Context.Channel.Id))
                     {
                         Storage.RemoveValidChannel(Context.Channel.Id);
