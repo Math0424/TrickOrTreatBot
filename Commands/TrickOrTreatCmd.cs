@@ -36,20 +36,21 @@ namespace DiscordBot.Commands
                 return;
             }
 
+            await DeferAsync(true);
             ClaimStatus s = _mod.ClaimDrop(Context.Channel.Id, u, trick);
             switch (s)
             {
                 case ClaimStatus.Claimed:
-                    await RespondAsync("Claimed prize!", ephemeral: true);
+                    await FollowupAsync("Claimed prize!", ephemeral: true);
                     break;
                 case ClaimStatus.Incorrect:
-                    await RespondAsync("Wrong answer!", ephemeral: true);
+                    await FollowupAsync("Wrong answer!", ephemeral: true);
                     break;
                 case ClaimStatus.AlreadyClaimed:
-                    await RespondAsync("Already claimed!", ephemeral: true);
+                    await FollowupAsync("Already claimed!", ephemeral: true);
                     break;
                 case ClaimStatus.NothingToClaim:
-                    await RespondAsync("Nothing to claim!", ephemeral: true);
+                    await FollowupAsync("Nothing to claim!", ephemeral: true);
                     break;
             }
         }

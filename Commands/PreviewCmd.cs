@@ -18,7 +18,8 @@ namespace TrickOrTreatBot.Commands
                     ShopKeeper keeper = Storage.GetShopkeeper(name);
                     if (keeper != null)
                     {
-                        await RespondWithFileAsync(Utils.GetShopkeeperPreview(keeper.ImageFile, keeper.Name, $"'{keeper.FlavorText}'", null), "card.png", ephemeral: true);
+                        await DeferAsync(true);
+                        await FollowupWithFileAsync(Utils.GetShopkeeperPreview(keeper.ImageFile, keeper.Name, $"'{keeper.FlavorText}'", null), "card.png", ephemeral: true);
                         return;
                     }
                     await RespondAsync($"Unknown shopkeeper {name}", ephemeral:true);
@@ -27,7 +28,8 @@ namespace TrickOrTreatBot.Commands
                     Item item = Storage.GetItem(name);
                     if (item != null)
                     {
-                        await RespondWithFileAsync(Utils.GetItemPreview(item.ImageFile, item.Name, (Rarity)item.Rarity), "item.png", ephemeral: true);
+                        await DeferAsync(true);
+                        await FollowupWithFileAsync(Utils.GetItemPreview(item.ImageFile, item.Name, (Rarity)item.Rarity), "item.png", ephemeral: true);
                         return;
                     }
                     await RespondAsync($"Unknown item {name}", ephemeral: true);
