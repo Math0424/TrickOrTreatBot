@@ -88,6 +88,7 @@ namespace DiscordBot
                 }
             };
 
+
             await Client.LoginAsync(TokenType.Bot, Storage.GetConfig("token", "nope"));
             await Client.StartAsync();
 

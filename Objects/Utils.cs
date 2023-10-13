@@ -262,7 +262,23 @@ namespace DiscordBot.Objects
                 );
 
                 using MagickImage img = new MagickImage(GetFileFromCache(imageFile));
-                img.Resize(new MagickGeometry(Math.Max(height, width), Math.Max(height, width))
+
+                int newHeight, newWidth;
+                double imageAspect = (double)img.Width / img.Height;
+                double boxAspect = (double)width / height;
+
+                if (imageAspect < boxAspect)
+                {
+                    newWidth = width;
+                    newHeight = (int)(width / imageAspect);
+                }
+                else
+                {
+                    newHeight = height;
+                    newWidth = (int)(height * imageAspect);
+                }
+
+                img.Resize(new MagickGeometry(newWidth, newHeight)
                 {
                     IgnoreAspectRatio = false
                 });
@@ -311,7 +327,24 @@ namespace DiscordBot.Objects
                 );
 
                 using MagickImage img = new MagickImage(GetFileFromCache(imageFile));
-                img.Resize(new MagickGeometry(Math.Max(height - 130, width), Math.Max(height - 130, width))
+                double scaleFactor = (double)(height - 130) / img.Height;
+
+                int newHeight, newWidth;
+                double imageAspect = (double)img.Width / img.Height;
+                double boxAspect = (double)width / height;
+
+                if (imageAspect < boxAspect)
+                {
+                    newWidth = width;
+                    newHeight = (int)(width / imageAspect);
+                }
+                else
+                {
+                    newHeight = height - 130;
+                    newWidth = (int)((height - 130) * imageAspect);
+                }
+
+                img.Resize(new MagickGeometry(newWidth, newHeight)
                 {
                     IgnoreAspectRatio = false
                 });
