@@ -52,7 +52,7 @@ namespace TrickOrTreatBot.Commands
 
             Storage.AddItem(item);
             Utils.Log($"{Context.User.Username} added item {name}");
-            await RespondAsync($"Completed", ephemeral: true);
+            await RespondAsync($"You have created item '{name}'");
         }
 
         [SlashCommand("createshopkeeper", "Add a new shopkeeper")]
@@ -97,7 +97,7 @@ namespace TrickOrTreatBot.Commands
 
             Utils.Log($"{Context.User.Username} added shopkeeper {name}");
             Storage.AddShopkeeper(shopkeeper);
-            await RespondAsync($"Completed", ephemeral: true);
+            await RespondAsync($"You have created shopkeeper '{name}' - \"{flavorText}\"");
         }
 
         private async Task<bool> ValidateImageURL(string imageUrl)
