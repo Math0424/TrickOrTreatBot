@@ -11,7 +11,7 @@ namespace TrickOrTreatBot.Commands
     public class CreateCmd : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("createitem", "Add a new item to get")]
-        public async Task CreateItem(string name, string flavorText, Rarity rarity, string ImageURL = null, Attachment attachment = null)
+        public async Task CreateItem(string name, Rarity rarity, string ImageURL = null, Attachment attachment = null)
         {
             if ((ImageURL != null && attachment != null) || (attachment == null && ImageURL == null))
             {
@@ -46,7 +46,6 @@ namespace TrickOrTreatBot.Commands
             {
                 Name = name,
                 CreatorId = Context.User.Id,
-                FlavorText = flavorText,
                 Rarity = (int)rarity,
                 ImageFile = fileName,
             };

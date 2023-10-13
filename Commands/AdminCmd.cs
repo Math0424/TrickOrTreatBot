@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using DiscordBot.Objects;
 using DiscordBot.Services;
 using Discord;
+using System;
 
 namespace DiscordBot.Commands
 {
@@ -33,7 +34,7 @@ namespace DiscordBot.Commands
                 case "toggle":
                     bool enabled = !bool.Parse(Storage.GetConfig("drops", "false"));
                     Storage.SetConfig("drops", enabled.ToString());
-                    await RespondAsync($"Toggled {value} to {(enabled ? "true" : "false")}", ephemeral: true);
+                    await RespondAsync($"Set drops to {(enabled ? "true" : "false")}", ephemeral: true);
                     return;
                 case "spawn":
                     await _trick.SpawnDrop(Context.Channel.Id);

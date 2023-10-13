@@ -248,7 +248,7 @@ namespace DiscordBot.Objects
             { Rarity.Mythic, "gradient:#7117eaFF-#ea6060FF"},
         };
 
-        public static Stream GetItemPreview(string imageFile, string name, string miniText, Rarity rare)
+        public static Stream GetItemPreview(string imageFile, string name, Rarity rare)
         {
             MemoryStream stream = new MemoryStream();
 
@@ -289,9 +289,6 @@ namespace DiscordBot.Objects
                 };
                 using MagickImage text01 = new MagickImage($"caption:{name}", settings);
                 image.Composite(text01, Gravity.North, CompositeOperator.Atop);
-
-                using MagickImage text02 = new MagickImage($"caption:{miniText}", settings);
-                image.Composite(text02, Gravity.South, CompositeOperator.Atop);
 
                 image.Write(stream, MagickFormat.Png);
             }
@@ -345,27 +342,34 @@ namespace DiscordBot.Objects
                 image.Composite(text02, Gravity.North, 0, 120, CompositeOperator.Atop);
 
 
-                image.Draw(
-                    new DrawableFillColor(MagickColors.Black),
-                    new DrawableGravity(Gravity.South),
-                    new DrawableRoundRectangle(0, height - 100, width - 1, height, 30, 30)
-                );
-
                 if (item != null)
                 {
-                    using MagickImage itemImage = new MagickImage(GetItemPreview(item.ImageFile, "", "", (Rarity)item.Rarity));
+                    image.Draw(
+                        new DrawableFillColor(MagickColors.Black),
+                        new DrawableGravity(Gravity.South),
+                        new DrawableRoundRectangle(0, height - 140, width - 1, height, 30, 30)
+                    );
+
+                    using MagickImage itemImage = new MagickImage(GetItemPreview(item.ImageFile, "", (Rarity)item.Rarity));
                     itemImage.Resize(200, 200);
                     image.Composite(itemImage, Gravity.Southeast, 20, 20, CompositeOperator.Atop);
 
                     if (bottomText != null)
                     {
                         settings.Width -= 200;
+                        settings.Height = 100;
                         using MagickImage text03 = new MagickImage($"caption:{bottomText}", settings);
                         image.Composite(text03, Gravity.Southwest, 30, 20, CompositeOperator.Atop);
                     }
                 } 
                 else if (bottomText != null)
                 {
+                    image.Draw(
+                        new DrawableFillColor(MagickColors.Black),
+                        new DrawableGravity(Gravity.South),
+                        new DrawableRoundRectangle(0, height - 100, width - 1, height, 30, 30)
+                    );
+
                     new Drawables()
                         .FontPointSize(64)
                         .Font("Arial")

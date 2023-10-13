@@ -40,7 +40,6 @@ namespace TrickOrTreatBot.Objects
         public string Name;
         public int Rarity;
         public string ImageFile;
-        public string FlavorText;
         public ulong CreatorId;
     }
 

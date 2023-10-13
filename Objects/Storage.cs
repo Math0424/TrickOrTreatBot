@@ -28,7 +28,7 @@ namespace DiscordBot.Objects
 
             string sql = @"
                 CREATE TABLE IF NOT EXISTS Config (
-                    Key TEXT,
+                    Key TEXT PRIMARY KEY,
                     Value TEXT
                 )";
             using (var command = new SQLiteCommand(sql, connection)) command.ExecuteNonQuery();
@@ -62,7 +62,6 @@ namespace DiscordBot.Objects
                     Name TEXT,
                     Rarity INTEGER,
                     ImageFile TEXT,
-                    FlavorText TEXT,
                     CreatorId INTEGER
                 )";
             using (var command = new SQLiteCommand(sql, connection)) command.ExecuteNonQuery();
@@ -141,7 +140,6 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                Utils.Log(GenerateStructInsertStatement(item, command, "Items"));
                 command.CommandText = GenerateStructInsertStatement(item, command, "Items");
                 command.ExecuteNonQuery();
             }
@@ -399,8 +397,13 @@ namespace DiscordBot.Objects
         {
             string query = $@"
                     INSERT OR REPLACE INTO Config (Key, Value)
-                    VALUES ({key}, {value});";
-            using (var command = new SQLiteCommand(query, connection)) command.ExecuteNonQuery();
+                    VALUES (@Key, @Value);";
+            using (var command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@Value", value);
+                command.Parameters.AddWithValue("@Key", key);
+                command.ExecuteNonQuery();
+            }
         }
 
         public static void AddInventoryItem(ulong userId, int itemId)

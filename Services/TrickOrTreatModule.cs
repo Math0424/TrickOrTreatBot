@@ -99,12 +99,13 @@ namespace DiscordBot.Services
             }
 
             GetDrop(drop, user);
-
             return ClaimStatus.Claimed;
         }
 
         public async Task SpawnDrop(ulong channelID)
         {
+            Utils.Log($"Spawning drop at {channelID}");
+            
             Drop d = new Drop()
             {
                 Shopkeeper = Storage.GetRandomShopkeeper(),

@@ -27,7 +27,7 @@ namespace TrickOrTreatBot.Commands
                     Item item = Storage.GetItem(name);
                     if (item != null)
                     {
-                        await RespondWithFileAsync(Utils.GetItemPreview(item.ImageFile, item.Name, item.FlavorText, (Rarity)item.Rarity), "item.png", ephemeral: true);
+                        await RespondWithFileAsync(Utils.GetItemPreview(item.ImageFile, item.Name, (Rarity)item.Rarity), "item.png", ephemeral: true);
                         return;
                     }
                     await RespondAsync($"Unknown item {name}", ephemeral: true);
