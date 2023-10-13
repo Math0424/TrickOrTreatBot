@@ -31,6 +31,20 @@ namespace DiscordBot.Commands
             string[] args = value.Split(" ");
             switch (args[0])
             {
+                case "removeitem":
+                    if (args.Length == 2)
+                    {
+                        Storage.RemoveItem(args[1]);
+                        await RespondAsync($"Removed item '{args[1]}'", ephemeral: true);
+                    }
+                    break;
+                case "removeshopkeeper":
+                    if (args.Length == 2)
+                    {
+                        Storage.RemoveShopkeeper(args[1]);
+                        await RespondAsync($"Removed shopkeeper '{args[1]}'", ephemeral: true);
+                    }
+                    break;
                 case "toggle":
                     bool enabled = !bool.Parse(Storage.GetConfig("drops", "false"));
                     Storage.SetConfig("drops", enabled.ToString());
@@ -63,11 +77,8 @@ namespace DiscordBot.Commands
                         }
                     }
                     break;
-                default:
-                    await RespondAsync($"Unknown", ephemeral: true);
-                    return;
             }
-
+            await RespondAsync($"Unknown", ephemeral: true);
         }
 
 

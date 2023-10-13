@@ -149,7 +149,7 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                command.CommandText = $"DELETE FROM Items WHERE Name = @Name;";
+                command.CommandText = $"DELETE FROM Items WHERE Name COLLATE NOCASE = @Name;";
                 command.Parameters.AddWithValue("@Name", name);
                 command.ExecuteNonQuery();
             }
@@ -168,7 +168,8 @@ namespace DiscordBot.Objects
         {
             using (var command = new SQLiteCommand(connection))
             {
-                command.CommandText = $"DELETE FROM ShopKeepers WHERE Name = '{name}';";
+                command.CommandText = $"DELETE FROM ShopKeepers WHERE Name COLLATE NOCASE = @Name;";
+                command.Parameters.AddWithValue("@Name", name);
                 command.ExecuteNonQuery();
             }
         }
