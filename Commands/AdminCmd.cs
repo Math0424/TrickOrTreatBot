@@ -32,17 +32,19 @@ namespace DiscordBot.Commands
             switch (args[0])
             {
                 case "removeitem":
-                    if (args.Length == 2)
+                    if (args.Length >= 2)
                     {
-                        Storage.RemoveItem(args[1]);
-                        await RespondAsync($"Removed item '{args[1]}'", ephemeral: true);
+                        string arg = string.Join(" ", args, 1, args.Length - 1);
+                        Storage.RemoveItem(arg);
+                        await RespondAsync($"Removed item '{arg}'", ephemeral: true);
                     }
                     break;
                 case "removeshopkeeper":
-                    if (args.Length == 2)
+                    if (args.Length >= 2)
                     {
-                        Storage.RemoveShopkeeper(args[1]);
-                        await RespondAsync($"Removed shopkeeper '{args[1]}'", ephemeral: true);
+                        string arg = string.Join(" ", args, 1, args.Length - 1);
+                        Storage.RemoveShopkeeper(arg);
+                        await RespondAsync($"Removed shopkeeper '{arg}'", ephemeral: true);
                     }
                     break;
                 case "toggle":

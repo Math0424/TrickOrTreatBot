@@ -266,7 +266,7 @@ namespace DiscordBot.Objects
                 {
                     IgnoreAspectRatio = false
                 });
-                image.Composite(img, Gravity.South, 0, 50, CompositeOperator.Atop);
+                image.Composite(img, Gravity.South, 0, 0, CompositeOperator.Atop);
 
                 using MagickImage gradient = new MagickImage(rarity[rare], width, height);
                 gradient.Evaluate(Channels.Alpha, EvaluateOperator.Multiply, 0.2);
