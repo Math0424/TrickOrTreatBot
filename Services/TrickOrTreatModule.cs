@@ -141,10 +141,8 @@ namespace DiscordBot.Services
             if (rank != -1)
             {
                 if (rank <= 2)
-                    maxRarity = Rarity.Common;
-                else if (rank <= 3)
                     maxRarity = Rarity.Rare;
-                else if (rank <= 7)
+                else if (rank <= 4)
                     maxRarity = Rarity.Epic;
                 else
                     minRarity = rand.NextDouble() > .5 ? Rarity.Rare : Rarity.Common;
