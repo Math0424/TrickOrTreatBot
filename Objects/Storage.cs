@@ -219,7 +219,7 @@ namespace DiscordBot.Objects
             return items;
         }
 
-        public static Item GetRandomItemRarity(Rarity highest)
+        public static Item GetRandomItemRarity(Rarity lowest, Rarity highest)
         {
             List<Item> items = new List<Item>();
 
@@ -238,7 +238,7 @@ namespace DiscordBot.Objects
                     while (reader.Read())
                     {
                         Item randomItem = PopulateFromReader<Item>(reader);
-                        if ((int)randomItem.Rarity < (int)highest)
+                        if ((int)randomItem.Rarity <= (int)highest && (int)randomItem.Rarity >= (int)lowest)
                         {
                             for (int i = 0; i < raities[(Rarity)randomItem.Rarity]; i++)
                                 items.Add(randomItem);
@@ -336,6 +336,34 @@ namespace DiscordBot.Objects
             return items;
         }
 
+        //points, rank
+        public static (int, int) GetScore(ulong discordId)
+        {
+            string query = @"
+                    SELECT DiscordId, TotalPoints, RANK() OVER (ORDER BY TotalPoints DESC) as Rank
+                    FROM (
+                        SELECT Users.DiscordId, SUM(Items.Rarity) as TotalPoints
+                        FROM Users
+                        JOIN ItemInventory ON Users.DiscordId = ItemInventory.OwnerId
+                        JOIN Items ON ItemInventory.ItemId = Items.ItemId
+                        GROUP BY Users.DiscordId
+                    ) as SubQuery
+                    WHERE DiscordId = @DiscordId";
+
+            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@DiscordId", discordId);
+                using (SQLiteDataReader reader = command.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        return (reader.GetInt32(1), reader.GetInt32(2));
+                    }
+                }
+            }
+            return (-1, -1);
+        }
+
         public static List<Tuple<ulong, int>> GetScores()
         {
             string query = @"
@@ -360,27 +388,6 @@ namespace DiscordBot.Objects
             return points;
         }
 
-        public static int GetScore(ulong discordId)
-        {
-            string query = $@"
-                    SELECT SUM(Items.Rarity) as TotalPoints
-                    FROM Users
-                    JOIN ItemInventory ON Users.DiscordId = ItemInventory.OwnerId
-                    JOIN Items ON ItemInventory.ItemId = Items.ItemId
-                    WHERE Users.DiscordId = {discordId}
-                    GROUP BY Users.DiscordId";
-            using (SQLiteCommand command = new SQLiteCommand(query, connection))
-            {
-                using (SQLiteDataReader reader = command.ExecuteReader())
-                {
-                    if (reader.Read())
-                    {
-                        return reader.GetInt32(0);
-                    }
-                }
-            }
-            return 0;
-        }
 
         public static User GetUser(ulong discordId)
         {

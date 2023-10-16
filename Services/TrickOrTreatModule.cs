@@ -134,7 +134,23 @@ namespace DiscordBot.Services
         {
             d.Message.DeleteAsync();
 
-            Item item = Storage.GetRandomItemRarity(Rarity.Mythic);
+            var rank = Storage.GetScore(user.DiscordId).Item2 + 1;
+
+            var maxRarity = Rarity.Mythic;
+            var minRarity = Rarity.Common;
+            if (rank != -1)
+            {
+                if (rank <= 2)
+                    maxRarity = Rarity.Common;
+                else if (rank <= 3)
+                    maxRarity = Rarity.Rare;
+                else if (rank <= 7)
+                    maxRarity = Rarity.Epic;
+                else
+                    minRarity = rand.NextDouble() > .5 ? Rarity.Rare : Rarity.Common;
+            }
+
+            Item item = Storage.GetRandomItemRarity(minRarity, maxRarity);
             Storage.AddInventoryItem(user.DiscordId, item.ItemId);
 
             Utils.Log($"{GetName(user.DiscordId)} has claimed prize '{item.Name}'");
