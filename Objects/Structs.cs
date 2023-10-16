@@ -54,6 +54,7 @@ namespace TrickOrTreatBot.Objects
     public enum ClaimStatus
     {
         Incorrect,
+        AlreadyFailed,
         NothingToClaim,
         AlreadyClaimed,
         Claimed,
@@ -69,7 +70,7 @@ namespace TrickOrTreatBot.Objects
 
         public ulong InteractUser;
         public bool Claimed = false;
-        public bool Failed = false;
+        public List<ulong> FailedUsers = new List<ulong>();
         public int TimeRemaining = 13;
     }
 

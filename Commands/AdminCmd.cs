@@ -79,8 +79,11 @@ namespace DiscordBot.Commands
                         }
                     }
                     break;
+                case "help":
+                    await RespondAsync($"removeitem [name]\nremoveshopkeeper [name]\ntoggle (toggle the bot drops)\nspawn (spawn a drop in this channel)\ndrops (enable/disable drops in this channel)\nrate [n] (1/n % chance to drop a drop)", ephemeral: true);
+                    return;
             }
-            await RespondAsync($"Unknown", ephemeral: true);
+            await RespondAsync($"Unknown, use 'help'", ephemeral: true);
         }
 
 

@@ -136,6 +136,17 @@ namespace DiscordBot.Objects
             return result;
         }
 
+        public static void RemoveRandomItem(ulong DiscordId)
+        {
+            string query = "DELETE FROM ItemInventory WHERE rowid = (SELECT rowid FROM ItemInventory WHERE OwnerId = @DiscordId ORDER BY RANDOM() LIMIT 1)";
+            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            {
+                command.Parameters.AddWithValue("@DiscordId", DiscordId);
+                command.ExecuteNonQuery();
+            }
+
+        }
+
         public static void AddItem(Item item)
         {
             using (var command = new SQLiteCommand(connection))
@@ -304,6 +315,27 @@ namespace DiscordBot.Objects
             return null;
         }
 
+        public static List<Item> GetInventory(ulong DiscordId)
+        {
+            string query = $@"
+                        SELECT Items.ItemId, Items.Name, Items.Rarity, Items.ImageFile, Items.CreatorId FROM ItemInventory 
+                        INNER JOIN Items 
+                        ON ItemInventory.ItemId = Items.ItemId 
+                        WHERE OwnerId = {DiscordId}";
+            List<Item> items = new List<Item>();
+            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            {
+                using (SQLiteDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        items.Add(PopulateFromReader<Item>(reader));
+                    }
+                }
+            }
+            return items;
+        }
+
         public static List<Tuple<ulong, int>> GetScores()
         {
             string query = @"
@@ -319,7 +351,7 @@ namespace DiscordBot.Objects
             {
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
-                    if (reader.Read())
+                    while (reader.Read())
                     {
                         points.Add(new Tuple<ulong, int>((ulong)reader.GetInt64(0), reader.GetInt32(1)));
                     }

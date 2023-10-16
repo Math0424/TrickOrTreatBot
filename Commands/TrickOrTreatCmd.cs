@@ -40,11 +40,14 @@ namespace DiscordBot.Commands
             ClaimStatus s = _mod.ClaimDrop(Context.Channel.Id, u, trick);
             switch (s)
             {
+                case ClaimStatus.AlreadyFailed:
+                    await FollowupAsync("You have already failed this drop", ephemeral: true);
+                    break;
                 case ClaimStatus.Claimed:
                     await FollowupAsync("Claimed prize!", ephemeral: true);
                     break;
                 case ClaimStatus.Incorrect:
-                    await FollowupAsync("Wrong answer!", ephemeral: true);
+                    await FollowupAsync("Wrong answer! For punishment they took one of YOUR candies!", ephemeral: true);
                     break;
                 case ClaimStatus.AlreadyClaimed:
                     await FollowupAsync("Already claimed!", ephemeral: true);

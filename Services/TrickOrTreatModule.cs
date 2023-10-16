@@ -88,15 +88,21 @@ namespace DiscordBot.Services
                 return ClaimStatus.AlreadyClaimed;
             }
 
-            drop.InteractUser = user.DiscordId;
-            drop.Claimed = true;
+            if (drop.FailedUsers.Contains(user.DiscordId))
+            {
+                return ClaimStatus.AlreadyFailed;
+            }
 
             if (drop.Trick != Trick)
             {
-                drop.Failed = true;
-                FailDrop(drop, user);
+                drop.FailedUsers.Add(user.DiscordId);
+                drop.TimeRemaining += 4;
+                Storage.RemoveRandomItem(user.DiscordId);
                 return ClaimStatus.Incorrect;
             }
+
+            drop.InteractUser = user.DiscordId;
+            drop.Claimed = true;
 
             GetDrop(drop, user);
             return ClaimStatus.Claimed;
@@ -122,22 +128,6 @@ namespace DiscordBot.Services
 
             d.Message = msg;
             _drops.Add(channelID, d);
-        }
-
-        private async Task FailDrop(Drop d, User user)
-        {
-            d.Message.DeleteAsync();
-
-            var msg = await ((SocketTextChannel)d.Message.Channel).SendFileAsync(
-                Utils.GetShopkeeperPreview(
-                    d.Shopkeeper.ImageFile,
-                    $"{GetName(user.DiscordId)} has scared {d.Shopkeeper.Name} away!",
-                    $"Next time dont be so hasty",
-                    null
-                    ), "shopkeeper.png");
-
-            d.Message = msg;
-            d.TimeRemaining = 4;
         }
 
         private async Task GetDrop(Drop d, User user)
