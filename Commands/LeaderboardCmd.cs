@@ -39,7 +39,7 @@ namespace TrickOrTreatBot.Commands
             builder.Footer = new EmbedFooterBuilder();
 
             var score = Storage.GetScore(Context.User.Id);
-            builder.Footer.Text = $"You are place {score.Item2 + 1} with a score of {score.Item1}";
+            builder.Footer.Text = $"You are place {score.Item2} with a score of {score.Item1}";
 
             await RespondAsync(embed: builder.Build(), ephemeral: true);
         }

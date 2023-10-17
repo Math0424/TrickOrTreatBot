@@ -134,18 +134,29 @@ namespace DiscordBot.Services
         {
             d.Message.DeleteAsync();
 
-            var rank = Storage.GetScore(user.DiscordId).Item2 + 1;
+            var rank = Storage.GetScore(user.DiscordId).Item1;
+            var highestScore = Storage.GetHighestScore();
 
             var maxRarity = Rarity.Mythic;
             var minRarity = Rarity.Common;
+
             if (rank != -1)
             {
-                if (rank <= 2)
+                float disparity = rank / (float)highestScore;
+                double randN = rand.NextDouble() - disparity;
+                if (randN > 0.9f)
+                    minRarity = Rarity.Mythic;
+                else if(randN > 0.8f)
+                    minRarity = Rarity.Epic;
+                else if (randN > 0.5f)
+                    minRarity = Rarity.Rare;
+
+                if (disparity > .9)
+                    maxRarity = Rarity.Common;
+                else if(disparity > .8)
                     maxRarity = Rarity.Rare;
-                else if (rank <= 4)
+                else if (disparity > .7)
                     maxRarity = Rarity.Epic;
-                else
-                    minRarity = rand.NextDouble() > .5 ? Rarity.Rare : Rarity.Common;
             }
 
             Item item = Storage.GetRandomItemRarity(minRarity, maxRarity);
@@ -159,7 +170,7 @@ namespace DiscordBot.Services
                     d.Shopkeeper.ImageFile,
                     $"{d.Shopkeeper.Name}",
                     $"{d.Shopkeeper.FlavorText}",
-                    $"{d.Shopkeeper.Name} loved your {u.Character} costume so much they gave you {item.Name}",
+                    $"{d.Shopkeeper.Name} loved {GetName(u.DiscordId)}'s {u.Character} costume so much they gave you {item.Name}",
                     item
                     ), "prize.png");
 

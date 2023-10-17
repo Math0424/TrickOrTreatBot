@@ -336,32 +336,56 @@ namespace DiscordBot.Objects
             return items;
         }
 
+        public static int GetHighestScore()
+        {
+            string query = @"
+                    SELECT MAX(TotalRarity) 
+                    FROM (
+                        SELECT OwnerId, SUM(Items.Rarity) AS TotalRarity
+                        FROM ItemInventory
+                        JOIN Items ON ItemInventory.ItemId = Items.ItemId
+                        GROUP BY OwnerId
+                    )";
+            using (var command = new SQLiteCommand(query, connection))
+            {
+                var result = command.ExecuteScalar();
+                return result != DBNull.Value ? Convert.ToInt32(result) : 0;
+            }
+        }
+
         //points, rank
         public static (int, int) GetScore(ulong discordId)
         {
-            string query = @"
-                    SELECT DiscordId, TotalPoints, RANK() OVER (ORDER BY TotalPoints DESC) as Rank
-                    FROM (
-                        SELECT Users.DiscordId, SUM(Items.Rarity) as TotalPoints
-                        FROM Users
-                        JOIN ItemInventory ON Users.DiscordId = ItemInventory.OwnerId
-                        JOIN Items ON ItemInventory.ItemId = Items.ItemId
-                        GROUP BY Users.DiscordId
-                    ) as SubQuery
-                    WHERE DiscordId = @DiscordId";
+            int totalPoints = -1;
+            int rank = -1;
 
-            using (SQLiteCommand command = new SQLiteCommand(query, connection))
+            string query = @"
+                    WITH UserRarity AS (
+                        SELECT OwnerId, SUM(Items.Rarity) AS TotalRarity
+                        FROM ItemInventory
+                        JOIN Items ON ItemInventory.ItemId = Items.ItemId
+                        GROUP BY OwnerId
+                    )
+                    SELECT TotalRarity, 
+                           (SELECT COUNT(*) + 1 FROM UserRarity WHERE TotalRarity > u.TotalRarity) AS UserRank
+                    FROM UserRarity u
+                    WHERE u.OwnerId = @discordId";
+
+            using (var command = new SQLiteCommand(query, connection))
             {
-                command.Parameters.AddWithValue("@DiscordId", discordId);
-                using (SQLiteDataReader reader = command.ExecuteReader())
+                command.Parameters.AddWithValue("@discordId", discordId);
+
+                using (var reader = command.ExecuteReader())
                 {
                     if (reader.Read())
                     {
-                        return (reader.GetInt32(1), reader.GetInt32(2));
+                        totalPoints = reader.GetInt32(0);
+                        rank = reader.GetInt32(1);
                     }
                 }
             }
-            return (-1, -1);
+
+            return (totalPoints, rank);
         }
 
         public static List<Tuple<ulong, int>> GetScores()
