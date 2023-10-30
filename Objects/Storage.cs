@@ -224,8 +224,8 @@ namespace DiscordBot.Objects
             List<Item> items = new List<Item>();
 
             Dictionary<Rarity, int> raities = new Dictionary<Rarity, int> { 
-                {Rarity.Common, 15 },
-                {Rarity.Rare, 7 }, 
+                {Rarity.Common, 30 },
+                {Rarity.Rare, 10 }, 
                 {Rarity.Epic, 3 }, 
                 {Rarity.Mythic, 1 }, 
             };
@@ -238,7 +238,7 @@ namespace DiscordBot.Objects
                     while (reader.Read())
                     {
                         Item randomItem = PopulateFromReader<Item>(reader);
-                        if ((int)randomItem.Rarity <= (int)highest && (int)randomItem.Rarity >= (int)lowest)
+                        if ((int)randomItem.Rarity >= (int)lowest && (int)randomItem.Rarity <= (int)highest)
                         {
                             for (int i = 0; i < raities[(Rarity)randomItem.Rarity]; i++)
                                 items.Add(randomItem);

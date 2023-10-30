@@ -123,41 +123,67 @@ namespace DiscordBot.Services
                     d.Shopkeeper.ImageFile,
                     $"Happy halloween!\n{d.Shopkeeper.Name} has appeared",
                     $"'{d.Shopkeeper.FlavorText}'",
-                    $"type /{(d.Trick ? "trick" : "treat")} to claim!"
+                    CreateBottomText(d.Trick)
                     ), "shopkeeper.png");
 
             d.Message = msg;
             _drops.Add(channelID, d);
         }
 
+        private string CreateBottomText(bool trick)
+        {
+            switch(rand.Next(12))
+            {
+                case 0:
+                    return $"Dont type /{(trick ? "treat" : "trick")} to claim!";
+                case 1:
+                    return $"Please dont /{(trick ? "treat" : "trick")} me!";
+                case 2:
+                    return $"I would like a /{(trick ? "trick" : "treat")}!";
+                case 3:
+                    return $"Give me a /{(trick ? "trick" : "treat")}!";
+                case 4:
+                    return $"/{(trick ? "trick" : "treat")} please!";
+                case 5:
+                    return $"/{(trick ? "trick" : "treat")} not /{(trick ? "treat" : "trick")}";
+                case 6:
+                    return $"Want to /{(trick ? "trick" : "treat")} me?";
+                case 7:
+                    return $"Ready for a /{(trick ? "trick" : "treat")}!";
+                case 8:
+                    return $"No /{(trick ? "treat" : "trick")} please!";
+                case 9:
+                    return $"Would love a /{(trick ? "trick" : "treat")}!";
+                default:
+                    return $"type /{(trick ? "trick" : "treat")} to claim!";
+            }
+        }
+
         private async Task GetDrop(Drop d, User user)
         {
             d.Message.DeleteAsync();
 
-            var rank = Storage.GetScore(user.DiscordId).Item1;
+            var score = Storage.GetScore(user.DiscordId).Item1;
             var highestScore = Storage.GetHighestScore();
 
             var maxRarity = Rarity.Mythic;
             var minRarity = Rarity.Common;
 
-            if (rank != -1)
-            {
-                float disparity = rank / (float)highestScore;
-                double randN = rand.NextDouble() - disparity;
-                if (randN > 0.9f)
-                    minRarity = Rarity.Mythic;
-                else if(randN > 0.8f)
-                    minRarity = Rarity.Epic;
-                else if (randN > 0.5f)
-                    minRarity = Rarity.Rare;
+            float disparity = score / (float)highestScore;
+            double randN = rand.NextDouble() - disparity;
+            if (randN > 0.9f)
+                minRarity = Rarity.Mythic;
+            else if (randN > 0.8f || disparity < 0.2)
+                minRarity = Rarity.Epic;
+            else if (randN > 0.5f)
+                minRarity = Rarity.Rare;
 
-                if (disparity > .9)
-                    maxRarity = Rarity.Common;
-                else if(disparity > .8)
-                    maxRarity = Rarity.Rare;
-                else if (disparity > .7)
-                    maxRarity = Rarity.Epic;
-            }
+            if (disparity > .9)
+                maxRarity = Rarity.Common;
+            else if(disparity > .8)
+                maxRarity = Rarity.Rare;
+            else if (disparity > .7)
+                maxRarity = Rarity.Epic;
 
             Item item = Storage.GetRandomItemRarity(minRarity, maxRarity);
             Storage.AddInventoryItem(user.DiscordId, item.ItemId);

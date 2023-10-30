@@ -46,9 +46,9 @@ namespace TrickOrTreatBot.Objects
     public enum Rarity
     {
         Common = 1,
-        Rare = 3,
-        Epic = 7,
-        Mythic = 10,
+        Rare = 7,
+        Epic = 12,
+        Mythic = 18,
     }
 
     public enum ClaimStatus

@@ -56,7 +56,7 @@ namespace TrickOrTreatBot.Commands
                     builder.Title = $"Items ({items.Count})";
                     foreach (var x in items)
                     {
-                        builder.Description += $"- **{x.Name}** : {(Rarity)x.Rarity}\n";
+                        builder.Description += $"- **{x.Name}** ({x.ItemId}) : {(Rarity)x.Rarity}\n";
                     }
                     break;
             }

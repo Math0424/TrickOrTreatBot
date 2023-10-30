@@ -47,6 +47,14 @@ namespace DiscordBot.Commands
                         await RespondAsync($"Removed shopkeeper '{arg}'", ephemeral: true);
                     }
                     break;
+                case "echo":
+                    if (args.Length >= 2)
+                    {
+                        string arg = string.Join(" ", args, 1, args.Length - 1);
+                        await RespondAsync($"Echoing", ephemeral: true);
+                        await ((ITextChannel)Context.Channel).SendMessageAsync(arg);
+                    }
+                    break;
                 case "toggle":
                     bool enabled = !bool.Parse(Storage.GetConfig("drops", "false"));
                     Storage.SetConfig("drops", enabled.ToString());
@@ -80,7 +88,13 @@ namespace DiscordBot.Commands
                     }
                     break;
                 case "help":
-                    await RespondAsync($"removeitem [name]\nremoveshopkeeper [name]\ntoggle (toggle the bot drops)\nspawn (spawn a drop in this channel)\ndrops (enable/disable drops in this channel)\nrate [n] (1/n % chance to drop a drop)", ephemeral: true);
+                    await RespondAsync($"removeitem [name]\n" +
+                        $"removeshopkeeper [name]\n" +
+                        $"toggle (toggle the bot drops)\n" +
+                        $"echo [text] (repeat in this channel)\n" +
+                        $"spawn (spawn a drop in this channel)\n" +
+                        $"drops (enable/disable drops in this channel)\n" +
+                        $"rate [n] (1/n % chance to drop a drop)\n", ephemeral: true);
                     return;
             }
             await RespondAsync($"Unknown, use 'help'", ephemeral: true);
