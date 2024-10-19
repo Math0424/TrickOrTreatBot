@@ -8,6 +8,7 @@ using TrickOrTreatBot.Objects;
 
 namespace TrickOrTreatBot.Commands
 {
+    [RegisterToGuilds]
     public class CreateCmd : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("createitem", "Add a new item to get")]

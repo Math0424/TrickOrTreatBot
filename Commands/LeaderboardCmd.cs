@@ -5,18 +5,13 @@ using DiscordBot.Objects;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TrickOrTreatBot.Objects;
 
 namespace TrickOrTreatBot.Commands
 {
-    public class LeaderboardCmd : InteractionModuleBase<SocketInteractionContext>
+    [RegisterToGuilds]
+    public class LeaderboardCmd(DiscordSocketClient client) : InteractionModuleBase<SocketInteractionContext>
     {
-        DiscordSocketClient client;
-
-        public LeaderboardCmd(DiscordSocketClient client)
-        {
-            this.client = client;
-        }
-
         public string GetName(ulong id)
         {
             var user = client.GetUser(id);

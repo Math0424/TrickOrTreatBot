@@ -7,14 +7,9 @@ using Discord;
 
 namespace DiscordBot.Commands
 {
-    public class TrickOrTreatCmd : InteractionModuleBase<SocketInteractionContext>
+    [RegisterToGuilds]
+    public class TrickOrTreatCmd(TrickOrTreatService _mod) : InteractionModuleBase<SocketInteractionContext>
     {
-        private readonly TrickOrTreatModule _mod;
-        public TrickOrTreatCmd(TrickOrTreatModule mod)
-        {
-            _mod = mod;
-        }
-
         [SlashCommand("trick", "Trick them!")]
         public async Task Trick()
         {

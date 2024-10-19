@@ -6,6 +6,7 @@ using TrickOrTreatBot.Objects;
 
 namespace TrickOrTreatBot.Commands
 {
+    [RegisterToGuilds]
     public class PreviewCmd : InteractionModuleBase<SocketInteractionContext>
     {
 

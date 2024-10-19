@@ -1,112 +1,55 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.Interactions;
-using Discord.WebSocket;
+﻿global using Discord;
+global using Discord.Interactions;
+global using Discord.WebSocket;
+
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Logging;
+
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+using Serilog;
+using System.IO;
 using System;
-using System.Threading.Tasks;
 using DiscordBot.Objects;
 using DiscordBot.Services;
-using TrickOrTreatBot.Services;
-using System.Linq;
-using System.IO;
-using TrickOrTreatBot.Objects;
 
-namespace DiscordBot
-{
-    public class DiscordCore
+
+var builder = new HostApplicationBuilder(args);
+
+var loggerConfig = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File(Path.Combine(Utils.GetDataFolder(), $"logs/log-{DateTime.Now:yy.MM.dd_HH.mm}.log"))
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(loggerConfig, dispose: true);
+
+builder.Services.AddSingleton(new DiscordSocketClient(
+    new DiscordSocketConfig
     {
-        private IServiceProvider Service;
-        private DiscordSocketClient Client;
-        private bool PhaseOne = false;
+        GatewayIntents = GatewayIntents.GuildMembers | GatewayIntents.AllUnprivileged,
+        FormatUsersInBidirectionalUnicode = false,
+        AlwaysDownloadUsers = true,
+        LogGatewayIntentWarnings = false,
+        LogLevel = LogSeverity.Verbose,
+    }));
 
-        static void Main(string[] _)
-        {
-            try
-            {
-                new DiscordCore().Run().GetAwaiter().GetResult();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("A critical error has occured!");
-                Console.WriteLine(e);
-            }
-        }
+builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>(), new InteractionServiceConfig()
+{
+    LogLevel = LogSeverity.Info,
+    ThrowOnError = true,
+}));
 
-        public void ConsoleIn()
-        {
-            while (true)
-            {
-                switch (Console.ReadLine().ToString())
-                {
-                    case "stop":
-                        Client.SetActivityAsync(new Game("shutting down"));
-                        Client.StopAsync();
-                        Environment.Exit(0);
-                        break;
-                }
-            }
-        }
+builder.Services.AddScoped<Random>();
 
-        public async Task Run()
-        {
-            new Task(() => ConsoleIn()).Start();
+builder.Services.AddSingleton<InteractionHandler>();
 
-            DiscordSocketConfig config = new DiscordSocketConfig();
-            config.GatewayIntents = GatewayIntents.GuildMembers | GatewayIntents.AllUnprivileged;
-            config.AlwaysDownloadUsers = true;
+builder.Services.AddHostedService<RandomStatusService>();
 
-            Utils.Log("Initalizing bot");
-            Client = new DiscordSocketClient(config);
-            Client.Log += LogAsync;
+builder.Services.AddSingleton<TrickOrTreatService>();
+builder.Services.AddHostedService(provider => provider.GetService<TrickOrTreatService>());
 
-            //install commands
-            Service = new ServiceCollection()
-                .AddSingleton(this)
-                .AddSingleton(Client)
-                .AddSingleton<InteractionService>()
+var app = builder.Build();
 
-                .AddSingleton<DMHandler>()
-                .AddSingleton<InteractionHandler>()
-                .AddSingleton<TrickOrTreatModule>()
-                
-                .BuildServiceProvider();
-
-            Client.Ready += async () =>
-            {
-                if (!PhaseOne)
-                {
-                    PhaseOne = true;
-                    Service.GetRequiredService<DMHandler>();
-                    Service.GetRequiredService<TrickOrTreatModule>();
-                    await Service.GetRequiredService<InteractionHandler>().Initalize();
-                    await LogAsync(new LogMessage(LogSeverity.Info, "Bot", "Logged in"));
-                } 
-                else
-                {
-                    await LogAsync(new LogMessage(LogSeverity.Info, "Bot", "Re-Logged in"));
-                }
-            };
-
-
-            await Client.LoginAsync(TokenType.Bot, Storage.GetConfig("token", "nope"));
-            await Client.StartAsync();
-
-            await Task.Delay(-1);
-        }
-
-        public Task LogAsync(LogMessage message)
-        {
-            if (message.Exception is CommandException cmdException)
-            {
-                Console.WriteLine($"[Command/{message.Severity}] {cmdException.Command.Aliases.First()}"
-                    + $" failed to execute in {cmdException.Context.Channel}.");
-                Console.WriteLine(cmdException);
-            }
-            else
-                Console.WriteLine($"[General/{message.Severity}] {message}");
-
-            return Task.CompletedTask;
-        }
-    }
-}
+await app.RunAsync();

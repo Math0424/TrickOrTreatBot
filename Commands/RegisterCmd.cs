@@ -6,33 +6,29 @@ using System;
 
 namespace DiscordBot.Commands
 {
+    [RegisterToGuilds]
     public class RegisterCmd : InteractionModuleBase<SocketInteractionContext>
     {
-        [SlashCommand("costume", "Set your favorite league character as your costume")]
-        public async Task Costume([Summary("champion", "Your FAVORITE league champion")] string name)
+        [SlashCommand("costume", "What costume are you wearing?")]
+        public async Task Costume([Summary("costume", "who are you going as")] string name)
         {
-            foreach(var x in Utils.champions)
+            if (name.Length > 15)
+                name = name.Substring(0, 15);
+
+            User u = new User()
             {
-                if (name.ToLower().Equals(x.ToLower()))
-                {
-                    User u = new User()
-                    {
-                        DiscordId = Context.User.Id,
-                        Character = x
-                    };
-                    try
-                    {
-                        Storage.AddUser(u);
-                    }
-                    catch(Exception ex)
-                    {
-                        Utils.Log(ex);
-                    }
-                    await RespondAsync($"Set your favorite champion to '{x}'", ephemeral: true);
-                    return;
-                }
+                DiscordId = Context.User.Id,
+                Character = name,
+            };
+            try
+            {
+                Storage.AddUser(u);
             }
-            await RespondAsync($"Unknown champion '{name}'", ephemeral: true);
+            catch (Exception ex)
+            {
+                Utils.Log(ex);
+            }
+            await RespondAsync($"Set your costume to '{name}'", ephemeral: true);
         }
     }
 }

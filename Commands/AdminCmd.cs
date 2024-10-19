@@ -4,16 +4,18 @@ using DiscordBot.Objects;
 using DiscordBot.Services;
 using Discord;
 using System;
+using TrickOrTreatBot.Objects;
 
 namespace DiscordBot.Commands
 {
+    [RegisterToGuilds]
     public class AdminCmd : InteractionModuleBase<SocketInteractionContext>
     {
         private ulong Allowed = 242785518763376641;
 
-        private readonly TrickOrTreatModule _trick;
+        private readonly TrickOrTreatService _trick;
 
-        public AdminCmd(TrickOrTreatModule trick)
+        public AdminCmd(TrickOrTreatService trick)
         {
             this._trick = trick;
         }
@@ -61,8 +63,8 @@ namespace DiscordBot.Commands
                     await RespondAsync($"Set drops to {(enabled ? "true" : "false")}", ephemeral: true);
                     return;
                 case "spawn":
-                    await _trick.SpawnDrop(Context.Channel.Id);
                     await RespondAsync("Spawned", ephemeral: true);
+                    await _trick.SpawnDrop(Context.Channel.Id);
                     return;
                 case "drops":
                     if (Storage.ContainsChannel(Context.Channel.Id))

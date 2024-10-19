@@ -1,57 +1,84 @@
-﻿using Discord;
-using Discord.Commands;
-using Discord.Interactions;
-using Discord.WebSocket;
-using DiscordBot.Objects;
+﻿using Discord.Interactions;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace TrickOrTreatBot.Services
+namespace DiscordBot.Services;
+
+public class InteractionHandler(DiscordSocketClient client, InteractionService interactionService, IServiceProvider services, ILogger<InteractionHandler> logger)
 {
-    public class InteractionHandler
+    public async Task InitializeAsync()
     {
+        await interactionService.AddModulesAsync(Assembly.GetEntryAssembly(), services);
 
-        private readonly DiscordSocketClient _client;
-        private readonly InteractionService _interaction;
-        private readonly IServiceProvider _service;
+        client.InteractionCreated += HandleInteraction;
+        interactionService.InteractionExecuted += HandleInteractionExecuted;
+    }
 
-        public InteractionHandler(DiscordSocketClient Client, InteractionService Interaction, IServiceProvider provider)
+    private async Task HandleInteraction(SocketInteraction interaction)
+    {
+        try
         {
-            _client = Client;
-            _interaction = Interaction;
-            _service = provider;
+            var context = new SocketInteractionContext(client, interaction);
+
+            var result = await interactionService.ExecuteCommandAsync(context, services);
+
+            if (!result.IsSuccess)
+                _ = Task.Run(() => HandleInteractionExecutionResult(interaction, result));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, ex.Message);
+        }
+    }
+
+    private Task HandleInteractionExecuted(ICommandInfo command, IInteractionContext context, IResult result)
+    {
+        if (!result.IsSuccess)
+            _ = Task.Run(() => HandleInteractionExecutionResult(context.Interaction, result));
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleInteractionExecutionResult(IDiscordInteraction interaction, IResult result)
+    {
+        switch (result.Error)
+        {
+            case InteractionCommandError.UnmetPrecondition:
+                logger.LogInformation($"Unmet precondition - {result.Error} {result.ErrorReason}");
+                break;
+
+            case InteractionCommandError.BadArgs:
+                logger.LogInformation($"Unmet precondition - {result.Error} {result.ErrorReason}");
+                break;
+
+            case InteractionCommandError.ConvertFailed:
+                logger.LogInformation($"Convert Failed - {result.Error} {result.ErrorReason}");
+                break;
+
+            case InteractionCommandError.Exception:
+                logger.LogInformation($"Exception - {result.Error} {result.ErrorReason}");
+                break;
+
+            case InteractionCommandError.ParseFailed:
+                logger.LogInformation($"Parse Failed - {result.Error} {result.ErrorReason}");
+                break;
+
+            case InteractionCommandError.UnknownCommand:
+                logger.LogInformation($"Unknown Command - {result.Error} {result.ErrorReason}");
+                break;
+
+            case InteractionCommandError.Unsuccessful:
+                logger.LogInformation($"Unsuccessful - {result.Error} {result.ErrorReason}");
+                break;
         }
 
-        public async Task Initalize()
+        if (!interaction.HasResponded)
         {
-            await _interaction.AddModulesAsync(Assembly.GetEntryAssembly(), _service);
-
-            _client.InteractionCreated += HandleInteraction;
-
-            Utils.Log($"Adding commands to guild");
-            foreach (var x in _client.Guilds)
-            {
-                Utils.Log($"Added commands to {x.Name}");
-                await _interaction.RegisterCommandsToGuildAsync(x.Id, true);
-            }
+            await interaction.RespondAsync("An error has occurred.", ephemeral: true);
         }
-
-        private async Task HandleInteraction(SocketInteraction context)
+        else
         {
-            try
-            {
-                var ctx = new SocketInteractionContext(_client, context);
-                await _interaction.ExecuteCommandAsync(ctx, _service);
-            } 
-            catch (Exception ex)
-            {
-                Utils.Log($"Error");
-                Utils.Log(ex.Message);
-            }
+            await interaction.FollowupAsync("An error has occurred.", ephemeral: true);
         }
-
     }
 }

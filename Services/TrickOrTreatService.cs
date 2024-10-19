@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using DiscordBot.Objects;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,12 +11,11 @@ using TrickOrTreatBot.Objects;
 
 namespace DiscordBot.Services
 {
-    public class TrickOrTreatModule
+    public class TrickOrTreatService(DiscordSocketClient _client, InteractionService interactions, IConfiguration config, ILogger<TrickOrTreatService> logger, InteractionHandler interactionHandler) : BackgroundService
     {
         private Random rand = new Random();
         private Dictionary<ulong, Drop> _drops = new Dictionary<ulong, Drop>();
 
-        private readonly DiscordSocketClient _client;
 
         public string GetName(ulong id)
         {
@@ -23,10 +23,54 @@ namespace DiscordBot.Services
             return user?.GlobalName ?? user?.Username ?? id.ToString();
         }
 
-        public TrickOrTreatModule(DiscordSocketClient Client)
+        public Task LogAsync(LogMessage msg)
         {
-            _client = Client;
-            new Task(() => Loop()).Start();
+            var severity = msg.Severity switch
+            {
+                LogSeverity.Critical => LogLevel.Critical,
+                LogSeverity.Error => LogLevel.Error,
+                LogSeverity.Warning => LogLevel.Warning,
+                LogSeverity.Info => LogLevel.Information,
+                LogSeverity.Verbose => LogLevel.Trace,
+                LogSeverity.Debug => LogLevel.Debug,
+                _ => LogLevel.Information
+            };
+
+            logger.Log(severity, msg.Exception, msg.Message);
+
+            return Task.CompletedTask;
+        }
+
+        private async Task ClientReady()
+        {
+            logger.LogInformation("Logged as {User}", _client.CurrentUser);
+
+            var mods = interactions.Modules.Where(x => x.Attributes.Any(a => a is RegisterToGuilds));
+            logger.LogInformation($"Loading {_client.Guilds.Count} guilds");
+            foreach (var x in _client.Guilds)
+            {
+                logger.LogInformation($"Registering {mods.Count()} mods in guild '{x.Name}' ({x.Id})");
+                await interactions.AddModulesToGuildAsync(x, true, mods.ToArray());
+                foreach (var item in await x.GetApplicationCommandsAsync())
+                {
+                    //if (!_registeredCommands.ContainsKey(x.Id))
+                        //_registeredCommands.Add(x.Id, new List<(string, ulong)>());
+                    //_registeredCommands[x.Id].Add((item.Name, item.Id));
+                    logger.LogInformation("- adding command {name} ({id})", item.Name, item.Id);
+                }
+            }
+        }
+
+        protected override Task ExecuteAsync(CancellationToken cancellationToken)
+        {
+            _client.Ready += ClientReady;
+
+            _client.Log += LogAsync;
+            interactions.Log += LogAsync;
+
+            return interactionHandler.InitializeAsync()
+            .ContinueWith(t => _client.LoginAsync(TokenType.Bot, config["Secrets:Discord"]), cancellationToken)
+            .ContinueWith(t => _client.StartAsync(), cancellationToken);
         }
 
         private async void Loop()
@@ -203,6 +247,5 @@ namespace DiscordBot.Services
             d.Message = msg;
             d.TimeRemaining = 4;
         }
-
     }
 }

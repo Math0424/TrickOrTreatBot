@@ -5,6 +5,9 @@ using System.Runtime.Serialization;
 
 namespace TrickOrTreatBot.Objects
 {
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+    public class RegisterToGuilds : Attribute;
+
     public class Config
     {
         public List<ulong> ValidChannels = new List<ulong>();

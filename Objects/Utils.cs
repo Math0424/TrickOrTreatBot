@@ -1,5 +1,6 @@
 ﻿using Discord;
 using ImageMagick;
+using ImageMagick.Drawing;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -252,7 +253,7 @@ namespace DiscordBot.Objects
         {
             MemoryStream stream = new MemoryStream();
 
-            int width = 512, height = 512;
+            uint width = 512, height = 512;
             using (MagickImage image = new MagickImage(MagickColors.Transparent, width, height))
             {
                 image.Draw(
@@ -263,19 +264,19 @@ namespace DiscordBot.Objects
 
                 using MagickImage img = new MagickImage(GetFileFromCache(imageFile));
 
-                int newHeight, newWidth;
+                uint newHeight, newWidth;
                 double imageAspect = (double)img.Width / img.Height;
                 double boxAspect = (double)width / height;
 
                 if (imageAspect < boxAspect)
                 {
                     newWidth = width;
-                    newHeight = (int)(width / imageAspect);
+                    newHeight = (uint)(width / imageAspect);
                 }
                 else
                 {
                     newHeight = height;
-                    newWidth = (int)(height * imageAspect);
+                    newWidth = (uint)(height * imageAspect);
                 }
 
                 img.Resize(new MagickGeometry(newWidth, newHeight)
@@ -315,7 +316,7 @@ namespace DiscordBot.Objects
         public static Stream GetShopkeeperPreview(string imageFile, string topText, string miniText, string bottomText, Item item = null)
         {
             MemoryStream stream = new MemoryStream();
-            int width = 650, height = 1050, cards = 3;
+            uint width = 650, height = 1050, cards = 3;
             using (MagickImage canvas = new MagickImage(MagickColors.Transparent, width + ((cards - 1) * 15), height + ((cards - 1) * 15)))
             {
                 using MagickImage image = new MagickImage(MagickColors.Transparent, width, height);
@@ -329,19 +330,19 @@ namespace DiscordBot.Objects
                 using MagickImage img = new MagickImage(GetFileFromCache(imageFile));
                 double scaleFactor = (double)(height - 130) / img.Height;
 
-                int newHeight, newWidth;
+                uint newHeight, newWidth;
                 double imageAspect = (double)img.Width / img.Height;
                 double boxAspect = (double)width / height;
 
                 if (imageAspect < boxAspect)
                 {
                     newWidth = width;
-                    newHeight = (int)(width / imageAspect);
+                    newHeight = (uint)(width / imageAspect);
                 }
                 else
                 {
                     newHeight = height - 130;
-                    newWidth = (int)((height - 130) * imageAspect);
+                    newWidth = (uint)((height - 130) * imageAspect);
                 }
 
                 img.Resize(new MagickGeometry(newWidth, newHeight)
