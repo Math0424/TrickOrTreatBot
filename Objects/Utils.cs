@@ -195,11 +195,6 @@ namespace DiscordBot.Objects
             return str;
         }
 
-        public static void Log(object message)
-        {
-            Console.WriteLine($"[General/Info] {message ?? "null"}");
-        }
-
         public static async Task<string> DownloadFile(string url)
         {
             string imageName = null;

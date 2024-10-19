@@ -21,7 +21,7 @@ namespace DiscordBot.Objects
             if (!File.Exists(databaseLocation))
                 SQLiteConnection.CreateFile(databaseLocation);
 
-            Utils.Log($"Writing data to {databaseLocation}");
+            Console.WriteLine($"Writing data to {databaseLocation}");
 
             connection = new SQLiteConnection($"Data Source={databaseLocation};Version=3;");
             connection.Open();
@@ -130,7 +130,7 @@ namespace DiscordBot.Objects
                 }
                 else
                 {
-                    Utils.Log($"Cannot get '{fieldName}' from struct type '{type}'");
+                    Console.WriteLine($"Cannot get '{fieldName}' from struct type '{type}'");
                 }
             }
             return result;

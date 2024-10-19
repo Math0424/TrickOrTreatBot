@@ -111,8 +111,7 @@ namespace DiscordBot.Services
                 }
                 catch (Exception ex)
                 {
-                    Utils.Log($"Failed to spawn drop");
-                    Utils.Log(ex.Message);
+                    logger.LogError(ex, $"Failed to spawn drop");
                 }
 
             }
@@ -154,7 +153,7 @@ namespace DiscordBot.Services
 
         public async Task SpawnDrop(ulong channelID)
         {
-            Utils.Log($"Spawning drop at {channelID}");
+            logger.LogInformation($"Spawning drop at {channelID}");
             
             Drop d = new Drop()
             {
@@ -232,7 +231,7 @@ namespace DiscordBot.Services
             Item item = Storage.GetRandomItemRarity(minRarity, maxRarity);
             Storage.AddInventoryItem(user.DiscordId, item.ItemId);
 
-            Utils.Log($"{GetName(user.DiscordId)} has claimed prize '{item.Name}'");
+            logger.LogInformation($"{GetName(user.DiscordId)} has claimed prize '{item.Name}'");
             User u = Storage.GetUser(user.DiscordId);
 
             var msg = await ((SocketTextChannel)d.Message.Channel).SendFileAsync(

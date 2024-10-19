@@ -9,16 +9,9 @@ using TrickOrTreatBot.Objects;
 namespace DiscordBot.Commands
 {
     [RegisterToGuilds]
-    public class AdminCmd : InteractionModuleBase<SocketInteractionContext>
+    public class AdminCmd(TrickOrTreatService _trick) : InteractionModuleBase<SocketInteractionContext>
     {
         private ulong Allowed = 242785518763376641;
-
-        private readonly TrickOrTreatService _trick;
-
-        public AdminCmd(TrickOrTreatService trick)
-        {
-            this._trick = trick;
-        }
 
         [RequireOwner]
         [SlashCommand("admin", "Admin only")]

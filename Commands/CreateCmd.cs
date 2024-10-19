@@ -1,6 +1,7 @@
 ﻿using Discord;
 using Discord.Interactions;
 using DiscordBot.Objects;
+using DiscordBot.Services;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -9,7 +10,7 @@ using TrickOrTreatBot.Objects;
 namespace TrickOrTreatBot.Commands
 {
     [RegisterToGuilds]
-    public class CreateCmd : InteractionModuleBase<SocketInteractionContext>
+    public class CreateCmd(ILogger<CreateCmd> logger) : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("createitem", "Add a new item to get")]
         public async Task CreateItem(string name, Rarity rarity, string ImageURL = null, Attachment attachment = null)
@@ -52,7 +53,7 @@ namespace TrickOrTreatBot.Commands
             };
 
             Storage.AddItem(item);
-            Utils.Log($"{Context.User.Username} added item {name}");
+            logger.LogInformation($"{Context.User.Username} added item {name}");
             await RespondAsync($"You have created item '{name}'");
         }
 
@@ -96,7 +97,7 @@ namespace TrickOrTreatBot.Commands
                 Name = name
             };
 
-            Utils.Log($"{Context.User.Username} added shopkeeper {name}");
+            logger.LogInformation($"{Context.User.Username} added shopkeeper {name}");
             Storage.AddShopkeeper(shopkeeper);
             await RespondAsync($"You have created shopkeeper '{name}' - \"{flavorText}\"");
         }

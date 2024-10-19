@@ -3,11 +3,12 @@ using System.Threading.Tasks;
 using DiscordBot.Objects;
 using TrickOrTreatBot.Objects;
 using System;
+using DiscordBot.Services;
 
 namespace DiscordBot.Commands
 {
     [RegisterToGuilds]
-    public class RegisterCmd : InteractionModuleBase<SocketInteractionContext>
+    public class RegisterCmd(ILogger<RegisterCmd> logger) : InteractionModuleBase<SocketInteractionContext>
     {
         [SlashCommand("costume", "What costume are you wearing?")]
         public async Task Costume([Summary("costume", "who are you going as")] string name)
@@ -26,7 +27,7 @@ namespace DiscordBot.Commands
             }
             catch (Exception ex)
             {
-                Utils.Log(ex);
+                logger.LogError(ex, "error setting user {}", Context.User);
             }
             await RespondAsync($"Set your costume to '{name}'", ephemeral: true);
         }
